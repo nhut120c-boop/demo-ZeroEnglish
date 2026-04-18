@@ -324,17 +324,9 @@ select:focus {
     width: 100%;
     text-align: center;
     word-wrap: break-word;
-    
-    /* FIX CẢNH BÁO VS CODE & TRÀN CHỮ */
-    display: -webkit-box;
-    -webkit-line-clamp: 4; /* Cho Webkit (Chrome, Cốc Cốc, Safari) */
-    line-clamp: 4;         /* Thuộc tính tiêu chuẩn (Xóa lỗi xanh) */
-    -webkit-box-orient: vertical;
-    
-    overflow: hidden;
     color: inherit;
+    /* Xóa sạch các dòng line-clamp và overflow ở đây để chữ không bị cắt nữa */
 }
-
 .card-front {
     background: #ffffff;
     border: 2px solid rgba(13, 110, 253, 0.25); /* Viền xanh nhạt chuyên nghiệp */
