@@ -299,15 +299,20 @@ select:focus {
 .card-face {
     position: absolute;
     inset: 0;
-    backface-visibility: hidden !important;
-    -webkit-backface-visibility: hidden !important;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    gap: 12px;
     padding: 25px;
     border-radius: 28px;
-    overflow: hidden; /* Fix tràn chữ ra ngoài thẻ */
+    backface-visibility: hidden !important;
+    -webkit-backface-visibility: hidden !important;
+    text-align: center;
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+    /* Ép trình duyệt render phẳng để chống lỗi hiển thị */
+    transform: translateZ(0); 
 }
 
 /* FIX: Tràn chữ mặt trước và mất chữ mặt sau */
@@ -329,10 +334,16 @@ select:focus {
     color: inherit;
 }
 
-.card-front { background: #fff; z-index: 2; transform: rotateY(0deg); }
-.card-back { 
-    background: linear-gradient(135deg, var(--blue), var(--blue-deep)); 
-    color: #fff !important; /* Đảm bảo chữ trắng nổi bật trên nền xanh */
+.card-front {
+    background: #ffffff;
+    border: 2px solid rgba(13, 110, 253, 0.25); /* Viền xanh nhạt chuyên nghiệp */
+    z-index: 2;
+    transform: rotateY(0deg);
+}
+.card-back {
+    background: linear-gradient(135deg, var(--blue), var(--blue-deep));
+    border: 2px solid rgba(255, 255, 255, 0.2); /* Viền trắng mờ tinh tế */
+    color: #fff !important;
     transform: rotateY(180deg);
 }
 
@@ -886,6 +897,9 @@ select:focus {
     .reading-text {
         font-size: 18px;
     }
+}
+.flashcard:hover .card-front {
+    border-color: var(--blue);
 }
 /* --- TRẠNG THÁI RỖNG (EMPTY STATE) --- */
 .empty-state {
