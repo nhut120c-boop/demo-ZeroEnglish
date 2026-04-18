@@ -640,7 +640,63 @@ const LOGIN_REQUIRED_ENDPOINTS = new Set([
   "ai/grammar",
   "ai/matching",
 ]);
+// --- DÁN VÀO ĐÂY (TRƯỚC dòng export default) ---
 
+async function supabaseRequest(path, options = {}) {
+  const url = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_KEY;
+  if (!url || !key) throw new Error("Lỗi Server: Supabase chưa cấu hình.");
+
+  const response = await fetch(`${url}${path}`, {
+    ...options,
+    headers: {
+      "apikey": key,
+      "Authorization": `Bearer ${key}`,
+      "Content-Type": "application/json",
+      "Prefer": "return=representation",
+      ...(options.headers || {})
+    }
+  });
+
+  const data = await response.json().catch(() => null);
+  if (!response.ok) throw new Error(data?.message || "Lỗi database.");
+  return data;
+}
+
+async function handleRegister(body) {
+  const email = cleanText(body.email, { maxLength: 120 }).toLowerCase();
+  const name = cleanText(body.name, { maxLength: 100 });
+  const password = cleanText(body.password, { maxLength: 100 });
+
+  const password_hash = await supabaseRequest('/rest/v1/rpc/hash_password', {
+    method: 'POST',
+    body: JSON.stringify({ plain: password })
+  });
+
+  const res = await supabaseRequest('/rest/v1/users', {
+    method: 'POST',
+    body: JSON.stringify({ email, name, password_hash })
+  });
+  
+  const user = Array.isArray(res) ? res[0] : res;
+  return jsonResponse({ id: user.id, email: user.email, name: user.name, plan: user.plan });
+}
+
+async function handleLogin(body) {
+  const email = cleanText(body.email, { maxLength: 120 }).toLowerCase();
+  const password = cleanText(body.password, { maxLength: 100 });
+
+  const users = await supabaseRequest(`/rest/v1/users?email=eq.${encodeURIComponent(email)}&select=*`);
+  if (!users?.length) throw new Error("Tài khoản không tồn tại.");
+  
+  const isMatch = await supabaseRequest('/rest/v1/rpc/verify_password', {
+    method: 'POST',
+    body: JSON.stringify({ plain: password, hash: users[0].password_hash })
+  });
+
+  if (!isMatch) throw new Error("Sai mật khẩu.");
+  return jsonResponse({ id: users[0].id, email: users[0].email, name: users[0].name, plan: users[0].plan });
+}
 export default async (request) => {
   if (request.method === "OPTIONS") {
     return new Response(null, { status: 204 });
@@ -672,6 +728,15 @@ export default async (request) => {
     // ─────────────────────────────────────────────────
 
     const body = await parseRequestBody(request);
+    const body = await parseRequestBody(request);
+
+    // --- DÁN 2 DÒNG NÀY VÀO ĐÂY ---
+    if (endpoint === "auth/register") return await handleRegister(body);
+    if (endpoint === "auth/login") return await handleLogin(body);
+    // ------------------------------
+
+    if (endpoint === "ai/topic") return await handleTopic(body);
+    // ... mấy dòng AI giữ nguyên ...
 
     if (endpoint === "ai/topic") return await handleTopic(body);
     if (endpoint === "ai/explain") return await handleExplain(body);

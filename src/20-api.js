@@ -37,6 +37,16 @@
                 },
             }).then(parseResponse);
         },
+
+        // --- HỆ THỐNG TÀI KHOẢN (Đăng ký / Đăng nhập) ---
+        register(email, name, password) {
+            return postJson("/api/auth/register", { email, name, password });
+        },
+        login(email, password) {
+            return postJson("/api/auth/login", { email, password });
+        },
+        // ------------------------------------------------
+
         generateTopic(topic) {
             return postJson("/api/ai/topic", { topic });
         },
