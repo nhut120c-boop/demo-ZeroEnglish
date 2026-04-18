@@ -117,7 +117,7 @@ body {
     gap: 24px;
 }
 
-/* --- FLASHCARD: BẢN SIÊU CÁCH NHIỆT (FIX LỖI HIỆN NGƯỢC) --- */
+/* --- FLASHCARD: BẢN GIA CỐ THÉP (TRỊ LỖI HIỆN NGƯỢC) --- */
 .flashcard-container {
     width: min(100%, 460px);
     height: 280px;
@@ -135,20 +135,26 @@ body {
     cursor: pointer;
 }
 
-/* KHÓA HOVER: Tuyệt đối không cho di chuột làm thay đổi vị trí thẻ */
+/* KHÓA HOVER: Tuyệt đối không cho di chuột làm thẻ rung lắc hay lật */
 .flashcard:hover { 
     transform: none !important; 
 }
 
-/* Lật thẻ khi Click */
+/* Khi chưa lật: Mặt trước z-index cao hơn */
+.flashcard .card-front { z-index: 10; }
+.flashcard .card-back { z-index: 5; }
+
+/* Khi ĐÃ LẬT: Ép mặt sau nhảy lên z-index cao nhất để đè bẹp mặt trước */
 .flashcard.is-flipped { 
     transform: rotateY(180deg) !important; 
 }
+.flashcard.is-flipped .card-front { z-index: 5; }
+.flashcard.is-flipped .card-back { z-index: 10; }
 
 .card-face {
     position: absolute;
     inset: 0;
-    /* KHÓA CHẾT MẶT SAU: Không cho phép nhìn xuyên thấu */
+    /* KHÓA CHẾT: Không cho phép nhìn xuyên thấu từ bất kỳ mặt nào */
     backface-visibility: hidden !important;
     -webkit-backface-visibility: hidden !important;
     
@@ -160,20 +166,21 @@ body {
     border-radius: 30px;
     border: 1px solid var(--border-soft);
     box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+    
+    /* Ép trình duyệt dùng GPU để vẽ, chống răng cưa và lỗi hiển thị */
+    transform: translateZ(0);
+    -webkit-font-smoothing: subpixel-antialiased;
 }
 
 .card-front { 
-    background: #ffffff; 
-    z-index: 2; 
-    /* Đẩy mặt trước lên 1px trong không gian 3D */
-    transform: rotateY(0deg) translateZ(1px); 
+    background: #ffffff !important; /* Màu trắng đặc để không bị xuyên thấu */
+    transform: rotateY(0deg); 
 }
 
 .card-back { 
-    background: var(--blue); 
+    background: var(--blue) !important; /* Màu xanh đặc */
     color: #fff; 
-    /* Đẩy mặt sau lùi về 1px để không bị dính vào mặt trước */
-    transform: rotateY(180deg) translateZ(1px); 
+    transform: rotateY(180deg);
 }
 
 .word-main { font-size: 48px; font-weight: 900; letter-spacing: -2px; }
