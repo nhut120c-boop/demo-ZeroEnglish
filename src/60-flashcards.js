@@ -18,6 +18,27 @@
         refs.saveWordBtn.textContent = isSavedWord(currentWord) ? "Bỏ lưu từ này" : "Lưu từ này";
     }
 
+    function resetFlashcardFlip() {
+        refs.flashcard.classList.remove("is-flipped");
+        refs.flashcard.classList.remove("is-animating");
+        state.flashcardInteraction.isAnimating = false;
+    }
+
+    function toggleFlashcard() {
+        if (!getCurrentWord() || state.flashcardInteraction.isAnimating) {
+            return;
+        }
+
+        state.flashcardInteraction.isAnimating = true;
+        refs.flashcard.classList.add("is-animating");
+        refs.flashcard.classList.toggle("is-flipped");
+
+        window.setTimeout(() => {
+            refs.flashcard.classList.remove("is-animating");
+            state.flashcardInteraction.isAnimating = false;
+        }, 420);
+    }
+
     function showCard() {
         const currentWord = getCurrentWord();
         if (!currentWord) {
@@ -67,7 +88,7 @@
 
         state.currentTopic = topicName;
         state.currentIndex = 0;
-        refs.flashcard.classList.remove("is-flipped");
+        resetFlashcardFlip();
         hide(refs.explanationBox);
         refs.explanationText.textContent = "";
         renderTopics();
@@ -83,7 +104,7 @@
         }
 
         state.currentIndex = nextIndex;
-        refs.flashcard.classList.remove("is-flipped");
+        resetFlashcardFlip();
         hide(refs.explanationBox);
         refs.explanationText.textContent = "";
         showCard();
@@ -161,10 +182,46 @@
     }
 
     function initFlashcards() {
-        refs.flashcard.addEventListener("click", () => {
-            if (getCurrentWord()) {
-                refs.flashcard.classList.toggle("is-flipped");
+        refs.flashcard.addEventListener("pointerdown", (event) => {
+            if (event.pointerType === "mouse" && event.button !== 0) {
+                return;
             }
+
+            state.flashcardInteraction.pointerId = event.pointerId;
+            state.flashcardInteraction.startX = event.clientX;
+            state.flashcardInteraction.startY = event.clientY;
+            state.flashcardInteraction.startTime = Date.now();
+        });
+
+        refs.flashcard.addEventListener("pointerup", (event) => {
+            if (state.flashcardInteraction.pointerId !== event.pointerId) {
+                return;
+            }
+
+            const moveX = Math.abs(event.clientX - state.flashcardInteraction.startX);
+            const moveY = Math.abs(event.clientY - state.flashcardInteraction.startY);
+            const elapsed = Date.now() - state.flashcardInteraction.startTime;
+
+            state.flashcardInteraction.pointerId = null;
+
+            if (moveX > 12 || moveY > 12 || elapsed > 450) {
+                return;
+            }
+
+            event.preventDefault();
+            toggleFlashcard();
+        });
+
+        refs.flashcard.addEventListener("pointercancel", () => {
+            state.flashcardInteraction.pointerId = null;
+        });
+
+        refs.flashcard.addEventListener("keydown", (event) => {
+            if (event.key !== "Enter" && event.key !== " ") {
+                return;
+            }
+            event.preventDefault();
+            toggleFlashcard();
         });
 
         refs.prevBtn.addEventListener("click", () => stepCard(-1));

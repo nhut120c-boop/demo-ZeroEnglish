@@ -31,6 +31,13 @@
             },
             lastSource: "",
         },
+        flashcardInteraction: {
+            pointerId: null,
+            startX: 0,
+            startY: 0,
+            startTime: 0,
+            isAnimating: false,
+        },
     };
 
     function persistCustomTopics() {

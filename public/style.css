@@ -275,12 +275,24 @@ select:focus {
     width: 100%;
     height: 100%;
     background: transparent;
+    padding: 0;
+    border: none;
+    appearance: none;
+    -webkit-appearance: none;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
     transform-style: preserve-3d;
     transition: transform 0.55s ease;
 }
 
 .flashcard.is-flipped {
     transform: rotateY(180deg);
+}
+
+.flashcard.is-animating {
+    pointer-events: none;
 }
 
 .card-face {
