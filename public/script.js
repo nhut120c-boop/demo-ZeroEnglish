@@ -8,8 +8,6 @@
     const STORAGE_KEYS = {
         customTopics: "zeroenglish.custom.topics",
         savedWords: "zeroenglish.saved.words",
-        cnCustomTopics: "zeroenglish.cn.custom.topics",
-        cnSavedWords: "zeroenglish.cn.saved.words",
     };
 
 // ---- data.js ----
@@ -241,16 +239,6 @@ const defaultData = {
                 },
             }).then(parseResponse);
         },
-
-        // --- HỆ THỐNG TÀI KHOẢN (Đăng ký / Đăng nhập) ---
-        register(email, name, password) {
-            return postJson("/api/auth/register", { email, name, password });
-        },
-        login(email, password) {
-            return postJson("/api/auth/login", { email, password });
-        },
-        // ------------------------------------------------
-
         generateTopic(topic) {
             return postJson("/api/ai/topic", { topic });
         },
@@ -272,31 +260,12 @@ const defaultData = {
         generateMatching(level) {
             return postJson("/api/ai/matching", { level });
         },
-        // --- Chinese endpoints ---
-        generateChineseTopic(topic) {
-            return postJson("/api/ai/cn/topic", { topic });
-        },
-        explainChineseSentence(sentence) {
-            return postJson("/api/ai/cn/explain", { sentence });
-        },
-        generateChineseReading(level) {
-            return postJson("/api/ai/cn/reading", { level });
-        },
-        generateChineseListening(level) {
-            return postJson("/api/ai/cn/listening", { level });
-        },
-        generateChineseMatching(level) {
-            return postJson("/api/ai/cn/matching", { level });
-        },
     };
 
 // ---- src/30-state.js ----
     const baseData = typeof defaultData === "object" && defaultData ? cloneData(defaultData) : {};
-    const baseCnData = typeof defaultChineseData === "object" && defaultChineseData ? cloneData(defaultChineseData) : {};
     const savedTopics = safeParse(localStorage.getItem(STORAGE_KEYS.customTopics), {});
     const savedWordsSeed = safeParse(localStorage.getItem(STORAGE_KEYS.savedWords), []);
-    const savedCnTopics = safeParse(localStorage.getItem(STORAGE_KEYS.cnCustomTopics), {});
-    const savedCnWordsSeed = safeParse(localStorage.getItem(STORAGE_KEYS.cnSavedWords), []);
 
     const state = {
         bootstrap: {
@@ -304,7 +273,6 @@ const defaultData = {
             aiEnabled: false,
             secureMode: false,
         },
-        // --- English ---
         appData: Object.assign({}, baseData, savedTopics),
         savedWordsList: Array.isArray(savedWordsSeed) ? savedWordsSeed : [],
         currentTopic: null,
@@ -322,7 +290,10 @@ const defaultData = {
             enOrder: [],
             viOrder: [],
             matchedIds: new Set(),
-            selected: { en: null, vi: null },
+            selected: {
+                en: null,
+                vi: null,
+            },
             lastSource: "",
         },
         flashcardInteraction: {
@@ -331,26 +302,6 @@ const defaultData = {
             startY: 0,
             startTime: 0,
             isAnimating: false,
-        },
-        // --- Chinese ---
-        cnAppData: Object.assign({}, baseCnData, savedCnTopics),
-        cnSavedWordsList: Array.isArray(savedCnWordsSeed) ? savedCnWordsSeed : [],
-        cnCurrentTopic: null,
-        cnCurrentIndex: 0,
-        cnCurrentReadingVocab: {},
-        cnCurrentListening: {
-            transcript: "",
-            questions: [],
-            utterance: null,
-        },
-        cnMatching: {
-            level: "easy",
-            pairs: [],
-            zhOrder: [],
-            viOrder: [],
-            matchedIds: new Set(),
-            selected: { zh: null, vi: null },
-            lastSource: "",
         },
     };
 
@@ -368,30 +319,12 @@ const defaultData = {
         localStorage.setItem(STORAGE_KEYS.savedWords, JSON.stringify(state.savedWordsList));
     }
 
-    function persistChineseTopics() {
-        const customCnTopics = {};
-        Object.keys(state.cnAppData).forEach((topicName) => {
-            if (!Object.prototype.hasOwnProperty.call(baseCnData, topicName)) {
-                customCnTopics[topicName] = state.cnAppData[topicName];
-            }
-        });
-        localStorage.setItem(STORAGE_KEYS.cnCustomTopics, JSON.stringify(customCnTopics));
-    }
-
-    function persistChineseSavedWords() {
-        localStorage.setItem(STORAGE_KEYS.cnSavedWords, JSON.stringify(state.cnSavedWordsList));
-    }
-
     function getCurrentWord() {
-        if (!state.currentTopic) return null;
+        if (!state.currentTopic) {
+            return null;
+        }
         const words = state.appData[state.currentTopic] || [];
         return words[state.currentIndex] || null;
-    }
-
-    function getCurrentChineseWord() {
-        if (!state.cnCurrentTopic) return null;
-        const words = state.cnAppData[state.cnCurrentTopic] || [];
-        return words[state.cnCurrentIndex] || null;
     }
 
     function isSavedWord(word) {
@@ -399,45 +332,27 @@ const defaultData = {
         return state.savedWordsList.some((item) => normalizeLookupKey(item.en) === targetKey);
     }
 
-    function isSavedChineseWord(word) {
-        const targetKey = normalizeLookupKey(word?.zh);
-        return state.cnSavedWordsList.some((item) => normalizeLookupKey(item.zh) === targetKey);
-    }
-
     function toggleSavedWord(word) {
         const targetKey = normalizeLookupKey(word?.en);
         const existingIndex = state.savedWordsList.findIndex((item) => normalizeLookupKey(item.en) === targetKey);
+
         if (existingIndex >= 0) {
             state.savedWordsList.splice(existingIndex, 1);
             persistSavedWords();
             return false;
         }
+
         state.savedWordsList.push(cloneData(word));
         persistSavedWords();
         return true;
     }
 
-    function toggleSavedChineseWord(word) {
-        const targetKey = normalizeLookupKey(word?.zh);
-        const existingIndex = state.cnSavedWordsList.findIndex((item) => normalizeLookupKey(item.zh) === targetKey);
-        if (existingIndex >= 0) {
-            state.cnSavedWordsList.splice(existingIndex, 1);
-            persistChineseSavedWords();
-            return false;
-        }
-        state.cnSavedWordsList.push(cloneData(word));
-        persistChineseSavedWords();
-        return true;
-    }
-
 // ---- src/40-dom.js ----
     const refs = {
-        // ── App status ──────────────────────────────────────────
         appStatusBanner: document.getElementById("appStatusBanner"),
         strictAiButtons: Array.from(document.querySelectorAll('[data-ai-required="strict"]')),
         tabButtons: Array.from(document.querySelectorAll(".tab-btn")),
         views: Array.from(document.querySelectorAll(".view-section")),
-        // ── English Flashcard ────────────────────────────────────
         topicInput: document.getElementById("topicInput"),
         generateBtn: document.getElementById("generateBtn"),
         loadingMsg: document.getElementById("loadingMsg"),
@@ -458,9 +373,6 @@ const defaultData = {
         controls: document.getElementById("controls"),
         prevBtn: document.getElementById("prevBtn"),
         nextBtn: document.getElementById("nextBtn"),
-        flashcardPlaceholder: document.getElementById("flashcardPlaceholder"),
-        flashcardHeader: document.getElementById("flashcardHeader"),
-        // ── English Reading ──────────────────────────────────────
         levelSelect: document.getElementById("levelSelect"),
         generateReadingBtn: document.getElementById("generateReadingBtn"),
         readingLoadingMsg: document.getElementById("readingLoadingMsg"),
@@ -470,7 +382,6 @@ const defaultData = {
         toggleTranslationBtn: document.getElementById("toggleTranslationBtn"),
         fullTranslationBox: document.getElementById("fullTranslationBox"),
         tooltip: document.getElementById("tooltip"),
-        // ── English Grammar ──────────────────────────────────────
         grammarSelect: document.getElementById("grammarSelect"),
         generateGrammarBtn: document.getElementById("generateGrammarBtn"),
         grammarLoadingMsg: document.getElementById("grammarLoadingMsg"),
@@ -479,11 +390,9 @@ const defaultData = {
         grammarFormula: document.getElementById("grammarFormula"),
         grammarUsage: document.getElementById("grammarUsage"),
         grammarExamples: document.getElementById("grammarExamples"),
-        // ── English Chat ─────────────────────────────────────────
         chatBox: document.getElementById("chatBox"),
         chatInput: document.getElementById("chatInput"),
         sendChatBtn: document.getElementById("sendChatBtn"),
-        // ── English Listening ────────────────────────────────────
         listenLevelSelect: document.getElementById("listenLevelSelect"),
         generateListenBtn: document.getElementById("generateListenBtn"),
         listenLoadingMsg: document.getElementById("listenLoadingMsg"),
@@ -496,7 +405,6 @@ const defaultData = {
         showTranscriptBtn: document.getElementById("showTranscriptBtn"),
         quizResult: document.getElementById("quizResult"),
         transcriptBox: document.getElementById("transcriptBox"),
-        // ── English Matching ─────────────────────────────────────
         matchingLevelSelect: document.getElementById("matchingLevelSelect"),
         generateMatchingBtn: document.getElementById("generateMatchingBtn"),
         matchingLoadingMsg: document.getElementById("matchingLoadingMsg"),
@@ -506,66 +414,8 @@ const defaultData = {
         matchingEnList: document.getElementById("matchingEnList"),
         matchingViList: document.getElementById("matchingViList"),
         matchingFeedback: document.getElementById("matchingFeedback"),
-        // ── English Saved ────────────────────────────────────────
         clearSavedBtn: document.getElementById("clearSavedBtn"),
         savedWordsGrid: document.getElementById("savedWordsGrid"),
-        // ── Chinese Flashcard ────────────────────────────────────
-        cnTopicInput: document.getElementById("cnTopicInput"),
-        cnGenerateBtn: document.getElementById("cnGenerateBtn"),
-        cnLoadingMsg: document.getElementById("cnLoadingMsg"),
-        cnTopicList: document.getElementById("cnTopicList"),
-        cnCurrentTopicTitle: document.getElementById("cnCurrentTopicTitle"),
-        cnProgressText: document.getElementById("cnProgressText"),
-        cnCardContainer: document.getElementById("cnCardContainer"),
-        cnFlashcard: document.getElementById("cnFlashcard"),
-        cnWordZh: document.getElementById("cnWordZh"),
-        cnWordPro: document.getElementById("cnWordPro"),
-        cnWordVi: document.getElementById("cnWordVi"),
-        cnWordEx: document.getElementById("cnWordEx"),
-        cnActionButtons: document.getElementById("cnActionButtons"),
-        cnSaveWordBtn: document.getElementById("cnSaveWordBtn"),
-        cnExplainBtn: document.getElementById("cnExplainBtn"),
-        cnExplanationBox: document.getElementById("cnExplanationBox"),
-        cnExplanationText: document.getElementById("cnExplanationText"),
-        cnControls: document.getElementById("cnControls"),
-        cnPrevBtn: document.getElementById("cnPrevBtn"),
-        cnNextBtn: document.getElementById("cnNextBtn"),
-        cnFlashcardPlaceholder: document.getElementById("cnFlashcardPlaceholder"),
-        cnFlashcardHeader: document.getElementById("cnFlashcardHeader"),
-        // ── Chinese Reading ──────────────────────────────────────
-        cnLevelSelect: document.getElementById("cnLevelSelect"),
-        cnGenerateReadingBtn: document.getElementById("cnGenerateReadingBtn"),
-        cnReadingLoadingMsg: document.getElementById("cnReadingLoadingMsg"),
-        cnReadingBox: document.getElementById("cnReadingBox"),
-        cnReadingTitle: document.getElementById("cnReadingTitle"),
-        cnReadingContent: document.getElementById("cnReadingContent"),
-        cnToggleTranslationBtn: document.getElementById("cnToggleTranslationBtn"),
-        cnFullTranslationBox: document.getElementById("cnFullTranslationBox"),
-        // ── Chinese Listening ────────────────────────────────────
-        cnListenLevelSelect: document.getElementById("cnListenLevelSelect"),
-        cnGenerateListenBtn: document.getElementById("cnGenerateListenBtn"),
-        cnListenLoadingMsg: document.getElementById("cnListenLoadingMsg"),
-        cnListeningBox: document.getElementById("cnListeningBox"),
-        cnPlayAudioBtn: document.getElementById("cnPlayAudioBtn"),
-        cnStopAudioBtn: document.getElementById("cnStopAudioBtn"),
-        cnQuizContainer: document.getElementById("cnQuizContainer"),
-        cnSubmitQuizBtn: document.getElementById("cnSubmitQuizBtn"),
-        cnShowTranscriptBtn: document.getElementById("cnShowTranscriptBtn"),
-        cnQuizResult: document.getElementById("cnQuizResult"),
-        cnTranscriptBox: document.getElementById("cnTranscriptBox"),
-        // ── Chinese Matching ─────────────────────────────────────
-        cnMatchingLevelSelect: document.getElementById("cnMatchingLevelSelect"),
-        cnGenerateMatchingBtn: document.getElementById("cnGenerateMatchingBtn"),
-        cnMatchingLoadingMsg: document.getElementById("cnMatchingLoadingMsg"),
-        cnMatchingBox: document.getElementById("cnMatchingBox"),
-        cnMatchingProgressText: document.getElementById("cnMatchingProgressText"),
-        cnResetMatchingBtn: document.getElementById("cnResetMatchingBtn"),
-        cnMatchingZhList: document.getElementById("cnMatchingZhList"),
-        cnMatchingViList: document.getElementById("cnMatchingViList"),
-        cnMatchingFeedback: document.getElementById("cnMatchingFeedback"),
-        // ── Chinese Saved ────────────────────────────────────────
-        cnClearSavedBtn: document.getElementById("cnClearSavedBtn"),
-        cnSavedWordsGrid: document.getElementById("cnSavedWordsGrid"),
     };
 
 // ---- src/50-tabs.js ----
@@ -573,11 +423,14 @@ const defaultData = {
         refs.tabButtons.forEach((button) => {
             button.classList.toggle("active", button.dataset.target === targetId);
         });
+
         refs.views.forEach((view) => {
             view.classList.toggle("hidden", view.id !== targetId);
         });
-        if (targetId === "view-saved") renderSavedWords();
-        if (targetId === "view-cn-saved") renderChineseSavedWords();
+
+        if (targetId === "view-saved") {
+            renderSavedWords();
+        }
     }
 
     function initTabs() {
@@ -606,21 +459,18 @@ function setFlashcardVisibility(hasWord) {
         refs.saveWordBtn.textContent = isSavedWord(currentWord) ? "Hủy lưu thuật ngữ" : "Lưu thuật ngữ";
     }
 
-   function resetFlashcardFlip() {
-        // 1. Dùng setProperty kèm '!important' để bóp nghẹt hoàn toàn hiệu ứng CSS
-        refs.flashcard.style.setProperty('transition', 'none', 'important');
-        
-        // 2. Gỡ class lật, đưa thẻ về mặt trước ngay trong chớp mắt
+    function resetFlashcardFlip() {
+        // Tắt hiệu ứng chuyển cảnh để trả về mặt trước ngay lập tức
+        refs.flashcard.style.transition = 'none';
         refs.flashcard.classList.remove("is-flipped");
         
-        // 3. Ép trình duyệt chốt ngay trạng thái không hiệu ứng (Force reflow)
+        // Ép trình duyệt cập nhật lại trạng thái (force reflow)
         void refs.flashcard.offsetHeight;
         
-        // 4. Cho thời gian chờ dài hơn hẳn (100ms) để chữ mới nạp xong xuôi
-        // rồi mới trả lại hiệu ứng xoay để click vào thẻ vẫn lật mượt mà
+        // Khôi phục lại hiệu ứng xoay cho lần click lật thẻ sau đó
         setTimeout(() => {
             refs.flashcard.style.transition = '';
-        }, 100);
+        }, 10);
     }
 
     function stepCard(delta) {
@@ -830,10 +680,12 @@ function setFlashcardVisibility(hasWord) {
     function renderReadingContent(content) {
         clearNode(refs.readingContent);
         const tokens = content.split(/\s+/).filter(Boolean);
+
         tokens.forEach((token, index) => {
             const wordButton = createElement("span", "", token);
             wordButton.dataset.word = normalizeLookupKey(token);
             refs.readingContent.appendChild(wordButton);
+
             if (index < tokens.length - 1) {
                 refs.readingContent.appendChild(document.createTextNode(" "));
             }
@@ -845,6 +697,7 @@ function setFlashcardVisibility(hasWord) {
         const meaning = state.currentReadingVocab[lookupKey] || "Chưa có nghĩa cho từ này.";
         refs.tooltip.textContent = meaning;
         show(refs.tooltip);
+
         requestAnimationFrame(() => {
             const rect = target.getBoundingClientRect();
             refs.tooltip.style.left = `${window.scrollX + rect.left + (rect.width / 2) - (refs.tooltip.offsetWidth / 2)}px`;
@@ -853,10 +706,6 @@ function setFlashcardVisibility(hasWord) {
     }
 
     async function handleReadingGeneration() {
-        if (!state.bootstrap.aiEnabled) {
-            showError("Tính năng Đọc hiểu yêu cầu AI. Vui lòng cấu hình GROQ_API_KEY.");
-            return;
-        }
         setBusy(refs.generateReadingBtn, true, "Đang tạo...");
         show(refs.readingLoadingMsg);
         hide(refs.readingBox);
@@ -864,9 +713,6 @@ function setFlashcardVisibility(hasWord) {
 
         try {
             const data = await api.generateReading(refs.levelSelect.value);
-            if (!data.content || !data.title) {
-                throw new Error("AI trả về bài đọc không hợp lệ. Vui lòng thử lại.");
-            }
             state.currentReadingVocab = data.vocab || {};
             refs.readingTitle.textContent = data.title;
             refs.fullTranslationBox.textContent = data.translation;
@@ -874,7 +720,7 @@ function setFlashcardVisibility(hasWord) {
             renderReadingContent(data.content);
             show(refs.readingBox);
         } catch (error) {
-            showError(error.message || "Lỗi kết nối AI. Vui lòng thử lại sau.");
+            showError(error.message);
         } finally {
             setBusy(refs.generateReadingBtn, false, "Đang tạo...");
             hide(refs.readingLoadingMsg);
@@ -883,18 +729,26 @@ function setFlashcardVisibility(hasWord) {
 
     function initReading() {
         refs.generateReadingBtn.addEventListener("click", handleReadingGeneration);
+
         refs.readingContent.addEventListener("click", (event) => {
             const target = event.target.closest("span[data-word]");
-            if (!target) return;
+            if (!target) {
+                return;
+            }
             showTooltipForWord(target);
         });
+
         refs.toggleTranslationBtn.addEventListener("click", () => {
             refs.fullTranslationBox.classList.toggle("hidden");
             refs.toggleTranslationBtn.textContent = refs.fullTranslationBox.classList.contains("hidden")
-                ? "Xem bản dịch đầy đủ" : "Ẩn bản dịch";
+                ? "Xem bản dịch đầy đủ"
+                : "Ẩn bản dịch";
         });
+
         document.addEventListener("click", (event) => {
-            if (!event.target.closest("#readingContent span")) hide(refs.tooltip);
+            if (!event.target.closest("#readingContent span")) {
+                hide(refs.tooltip);
+            }
         });
     }
 
@@ -995,25 +849,32 @@ function setFlashcardVisibility(hasWord) {
 // ---- src/100-listening.js ----
     function renderListeningQuestions() {
         clearNode(refs.quizContainer);
+
         state.currentListening.questions.forEach((question, questionIndex) => {
             const card = createElement("article", "quiz-card");
-            card.appendChild(createElement("h4", "", `Câu ${questionIndex + 1}: ${question.q}`));
+            const heading = createElement("h4", "", `Câu ${questionIndex + 1}: ${question.q}`);
+            card.appendChild(heading);
+
             question.options.forEach((option, optionIndex) => {
                 const label = createElement("label", "quiz-option-label");
                 const input = document.createElement("input");
                 input.type = "radio";
                 input.name = `question-${questionIndex}`;
                 input.value = String(optionIndex);
+
                 label.appendChild(input);
                 label.appendChild(document.createTextNode(` ${option}`));
                 card.appendChild(label);
             });
+
             refs.quizContainer.appendChild(card);
         });
     }
 
     function buildUtterance(transcript, level) {
-        if (!window.speechSynthesis) return null;
+        if (!window.speechSynthesis) {
+            return null;
+        }
         const utterance = new SpeechSynthesisUtterance(transcript);
         utterance.lang = "en-US";
         utterance.rate = level === "easy" ? 0.82 : level === "medium" ? 0.95 : 1.04;
@@ -1021,10 +882,6 @@ function setFlashcardVisibility(hasWord) {
     }
 
     async function handleListeningGeneration() {
-        if (!state.bootstrap.aiEnabled) {
-            showError("Tính năng Luyện nghe yêu cầu AI. Vui lòng cấu hình GROQ_API_KEY.");
-            return;
-        }
         setBusy(refs.generateListenBtn, true, "Đang tạo...");
         show(refs.listenLoadingMsg);
         hide(refs.listeningBox);
@@ -1032,24 +889,23 @@ function setFlashcardVisibility(hasWord) {
         hide(refs.showTranscriptBtn);
         hide(refs.transcriptBox);
         refs.submitQuizBtn.disabled = false;
-        if (window.speechSynthesis) window.speechSynthesis.cancel();
+
+        if (window.speechSynthesis) {
+            window.speechSynthesis.cancel();
+        }
 
         try {
             const level = refs.listenLevelSelect.value;
             const data = await api.generateListening(level);
-
-            if (!data.transcript || !Array.isArray(data.questions) || data.questions.length === 0) {
-                throw new Error("AI trả về bài nghe không hợp lệ. Vui lòng thử lại.");
-            }
-
             state.currentListening.transcript = data.transcript;
             state.currentListening.questions = data.questions;
             state.currentListening.utterance = buildUtterance(data.transcript, level);
+
             refs.transcriptBox.textContent = data.transcript;
             renderListeningQuestions();
             show(refs.listeningBox);
         } catch (error) {
-            showError(error.message || "Lỗi kết nối AI. Vui lòng thử lại sau.");
+            showError(error.message);
         } finally {
             setBusy(refs.generateListenBtn, false, "Đang tạo...");
             hide(refs.listenLoadingMsg);
@@ -1057,24 +913,35 @@ function setFlashcardVisibility(hasWord) {
     }
 
     function handleSubmitQuiz() {
-        if (!state.currentListening.questions.length) return;
+        if (!state.currentListening.questions.length) {
+            return;
+        }
+
         let score = 0;
         state.currentListening.questions.forEach((question, questionIndex) => {
             const checked = refs.quizContainer.querySelector(`input[name="question-${questionIndex}"]:checked`);
             const options = refs.quizContainer.querySelectorAll(`input[name="question-${questionIndex}"]`);
+
             options.forEach((input, optionIndex) => {
                 const label = input.closest(".quiz-option-label");
                 label.classList.remove("option-correct", "option-wrong");
-                if (optionIndex === question.answerIndex) label.classList.add("option-correct");
+                if (optionIndex === question.answerIndex) {
+                    label.classList.add("option-correct");
+                }
                 if (checked && Number(checked.value) === optionIndex && optionIndex !== question.answerIndex) {
                     label.classList.add("option-wrong");
                 }
             });
-            if (checked && Number(checked.value) === question.answerIndex) score += 1;
+
+            if (checked && Number(checked.value) === question.answerIndex) {
+                score += 1;
+            }
         });
+
         refs.quizResult.textContent = `Bạn đúng ${score} / ${state.currentListening.questions.length} câu.`;
         refs.quizResult.style.background = score === state.currentListening.questions.length
-            ? "rgba(30, 143, 98, 0.14)" : "rgba(212, 138, 18, 0.18)";
+            ? "rgba(30, 143, 98, 0.14)"
+            : "rgba(212, 138, 18, 0.18)";
         refs.quizResult.style.color = score === state.currentListening.questions.length ? "#116241" : "#8e5d09";
         show(refs.quizResult);
         show(refs.showTranscriptBtn);
@@ -1083,10 +950,15 @@ function setFlashcardVisibility(hasWord) {
 
     function handlePlayAudio() {
         if (!state.currentListening.utterance || !window.speechSynthesis) {
-            showError("Chưa có đoạn nghe. Vui lòng tạo bài trước.");
+            showError("Chưa có đoạn nghe để phát.");
             return;
         }
-        if (window.speechSynthesis.paused) { window.speechSynthesis.resume(); return; }
+
+        if (window.speechSynthesis.paused) {
+            window.speechSynthesis.resume();
+            return;
+        }
+
         window.speechSynthesis.cancel();
         window.speechSynthesis.speak(state.currentListening.utterance);
     }
@@ -1096,15 +968,20 @@ function setFlashcardVisibility(hasWord) {
         refs.submitQuizBtn.addEventListener("click", handleSubmitQuiz);
         refs.playAudioBtn.addEventListener("click", handlePlayAudio);
         refs.pauseAudioBtn.addEventListener("click", () => {
-            if (window.speechSynthesis) window.speechSynthesis.pause();
+            if (window.speechSynthesis) {
+                window.speechSynthesis.pause();
+            }
         });
         refs.stopAudioBtn.addEventListener("click", () => {
-            if (window.speechSynthesis) window.speechSynthesis.cancel();
+            if (window.speechSynthesis) {
+                window.speechSynthesis.cancel();
+            }
         });
         refs.showTranscriptBtn.addEventListener("click", () => {
             refs.transcriptBox.classList.toggle("hidden");
             refs.showTranscriptBtn.textContent = refs.transcriptBox.classList.contains("hidden")
-                ? "Xem lời thoại" : "Ẩn lời thoại";
+                ? "Xem lời thoại"
+                : "Ẩn lời thoại";
         });
     }
 
@@ -1116,7 +993,9 @@ function setFlashcardVisibility(hasWord) {
     function setMatchingFeedback(message, type) {
         refs.matchingFeedback.textContent = message;
         refs.matchingFeedback.classList.remove("success", "error");
-        if (type === "success" || type === "error") refs.matchingFeedback.classList.add(type);
+        if (type === "success" || type === "error") {
+            refs.matchingFeedback.classList.add(type);
+        }
     }
 
     function getPairById(pairId) {
@@ -1125,24 +1004,36 @@ function setFlashcardVisibility(hasWord) {
 
     function renderMatchingColumn(container, side, order) {
         clearNode(container);
+
         order.forEach((pairId) => {
             const pair = getPairById(pairId);
-            if (!pair) return;
+            if (!pair) {
+                return;
+            }
+
             const button = createElement("button", "matching-option", side === "en" ? pair.en : pair.vi);
             button.type = "button";
             button.dataset.side = side;
             button.dataset.id = String(pair.id);
-            if (state.matching.selected[side] === pair.id) button.classList.add("is-selected");
+
+            if (state.matching.selected[side] === pair.id) {
+                button.classList.add("is-selected");
+            }
             if (state.matching.matchedIds.has(pair.id)) {
                 button.classList.add("is-matched");
                 button.disabled = true;
             }
+
             container.appendChild(button);
         });
     }
 
     function renderMatchingBoard() {
-        if (!state.matching.pairs.length) { hide(refs.matchingBox); return; }
+        if (!state.matching.pairs.length) {
+            hide(refs.matchingBox);
+            return;
+        }
+
         renderMatchingColumn(refs.matchingEnList, "en", state.matching.enOrder);
         renderMatchingColumn(refs.matchingViList, "vi", state.matching.viOrder);
         updateMatchingProgress();
@@ -1152,13 +1043,17 @@ function setFlashcardVisibility(hasWord) {
     function evaluateMatchingSelection() {
         const selectedEnglish = state.matching.selected.en;
         const selectedVietnamese = state.matching.selected.vi;
-        if (!selectedEnglish || !selectedVietnamese) return;
+
+        if (!selectedEnglish || !selectedVietnamese) {
+            return;
+        }
 
         if (selectedEnglish === selectedVietnamese) {
             const pair = getPairById(selectedEnglish);
             state.matching.matchedIds.add(selectedEnglish);
             state.matching.selected = { en: null, vi: null };
             renderMatchingBoard();
+
             if (state.matching.matchedIds.size === state.matching.pairs.length) {
                 setMatchingFeedback("Hoàn thành rồi. Bạn đã ghép đúng toàn bộ bộ từ.", "success");
             } else {
@@ -1167,18 +1062,21 @@ function setFlashcardVisibility(hasWord) {
             return;
         }
 
-        const wrongEn = getPairById(selectedEnglish);
-        const wrongVi = getPairById(selectedVietnamese);
+        const wrongEnglish = getPairById(selectedEnglish);
+        const wrongVietnamese = getPairById(selectedVietnamese);
         state.matching.selected = { en: null, vi: null };
         renderMatchingBoard();
         setMatchingFeedback(
-            `Chưa đúng: "${wrongEn?.en || "từ"}" chưa ghép với "${wrongVi?.vi || "nghĩa"}".`,
+            `Chưa đúng: "${wrongEnglish?.en || "từ"}" chưa ghép với "${wrongVietnamese?.vi || "nghĩa"}".`,
             "error",
         );
     }
 
     function handleMatchingPick(side, pairId) {
-        if (state.matching.matchedIds.has(pairId)) return;
+        if (state.matching.matchedIds.has(pairId)) {
+            return;
+        }
+
         state.matching.selected[side] = state.matching.selected[side] === pairId ? null : pairId;
         renderMatchingBoard();
         evaluateMatchingSelection();
@@ -1186,11 +1084,12 @@ function setFlashcardVisibility(hasWord) {
 
     function seedMatchingBoard(pairs, source) {
         state.matching.pairs = pairs;
-        state.matching.enOrder = shuffle(pairs.map((p) => p.id));
-        state.matching.viOrder = shuffle(pairs.map((p) => p.id));
+        state.matching.enOrder = shuffle(pairs.map((pair) => pair.id));
+        state.matching.viOrder = shuffle(pairs.map((pair) => pair.id));
         state.matching.matchedIds = new Set();
         state.matching.selected = { en: null, vi: null };
         state.matching.lastSource = source;
+
         renderMatchingBoard();
         if (source === "fallback") {
             setMatchingFeedback("AI chưa bật nên đang dùng bộ ghép từ an toàn có sẵn.", "");
@@ -1199,27 +1098,6 @@ function setFlashcardVisibility(hasWord) {
         }
     }
 
-    const MATCHING_FALLBACK = {
-        easy: [
-            { id:1, en:"apple", vi:"quả táo" }, { id:2, en:"water", vi:"nước" },
-            { id:3, en:"book", vi:"quyển sách" }, { id:4, en:"house", vi:"ngôi nhà" },
-            { id:5, en:"friend", vi:"bạn bè" }, { id:6, en:"school", vi:"trường học" },
-        ],
-        medium: [
-            { id:1, en:"deadline", vi:"hạn chót" }, { id:2, en:"meeting", vi:"cuộc họp" },
-            { id:3, en:"journey", vi:"hành trình" }, { id:4, en:"improve", vi:"cải thiện" },
-            { id:5, en:"decision", vi:"quyết định" }, { id:6, en:"practice", vi:"luyện tập" },
-            { id:7, en:"support", vi:"hỗ trợ" }, { id:8, en:"project", vi:"dự án" },
-        ],
-        hard: [
-            { id:1, en:"resilient", vi:"kiên cường" }, { id:2, en:"perspective", vi:"góc nhìn" },
-            { id:3, en:"sustainable", vi:"bền vững" }, { id:4, en:"compliance", vi:"sự tuân thủ" },
-            { id:5, en:"vulnerable", vi:"dễ bị tổn thương" }, { id:6, en:"negotiate", vi:"đàm phán" },
-            { id:7, en:"misleading", vi:"gây hiểu lầm" }, { id:8, en:"constraint", vi:"ràng buộc" },
-            { id:9, en:"scalable", vi:"có thể mở rộng" }, { id:10, en:"transparent", vi:"minh bạch" },
-        ],
-    };
-
     async function handleMatchingGeneration() {
         setBusy(refs.generateMatchingBtn, true, "Đang tạo...");
         show(refs.matchingLoadingMsg);
@@ -1227,27 +1105,10 @@ function setFlashcardVisibility(hasWord) {
         try {
             const level = refs.matchingLevelSelect.value;
             state.matching.level = level;
-
-            if (!state.bootstrap.aiEnabled) {
-                const fallback = MATCHING_FALLBACK[level] || MATCHING_FALLBACK.easy;
-                seedMatchingBoard(fallback, "fallback");
-                return;
-            }
-
-            try {
-                const data = await api.generateMatching(level);
-                const pairs = Array.isArray(data.pairs) && data.pairs.length >= 4 ? data.pairs : null;
-                if (pairs) {
-                    seedMatchingBoard(pairs, data.source || "ai");
-                } else {
-                    throw new Error("AI trả về dữ liệu không đủ.");
-                }
-            } catch {
-                const fallback = MATCHING_FALLBACK[level] || MATCHING_FALLBACK.easy;
-                seedMatchingBoard(fallback, "fallback");
-            }
+            const data = await api.generateMatching(level);
+            seedMatchingBoard(Array.isArray(data.pairs) ? data.pairs : [], data.source);
         } catch (error) {
-            showError(error.message || "Lỗi khi tải bộ ghép từ.");
+            showError(error.message);
         } finally {
             setBusy(refs.generateMatchingBtn, false, "Đang tạo...");
             hide(refs.matchingLoadingMsg);
@@ -1257,28 +1118,38 @@ function setFlashcardVisibility(hasWord) {
     function initMatching() {
         refs.generateMatchingBtn.addEventListener("click", handleMatchingGeneration);
         refs.resetMatchingBtn.addEventListener("click", () => {
-            if (!state.matching.pairs.length) return;
+            if (!state.matching.pairs.length) {
+                return;
+            }
             state.matching.enOrder = shuffle(state.matching.enOrder);
             state.matching.viOrder = shuffle(state.matching.viOrder);
             state.matching.selected = { en: null, vi: null };
             renderMatchingBoard();
             setMatchingFeedback("Đã trộn lại các lựa chọn.", "");
         });
+
         refs.matchingEnList.addEventListener("click", (event) => {
             const target = event.target.closest("button[data-side='en']");
-            if (!target) return;
+            if (!target) {
+                return;
+            }
             handleMatchingPick("en", Number(target.dataset.id));
         });
+
         refs.matchingViList.addEventListener("click", (event) => {
             const target = event.target.closest("button[data-side='vi']");
-            if (!target) return;
+            if (!target) {
+                return;
+            }
             handleMatchingPick("vi", Number(target.dataset.id));
         });
     }
 
 // ---- src/120-bootstrap.js ----
-    function updateStatusBanner(message, warning) {
-        if (!refs.appStatusBanner) return;
+function updateStatusBanner(message, warning) {
+        // Chặn lỗi: Nếu đại ca đã xóa thẻ banner ở HTML thì code sẽ tự dừng, không báo lỗi đỏ màn hình
+        if (!refs.appStatusBanner) return; 
+
         refs.appStatusBanner.textContent = message;
         refs.appStatusBanner.classList.toggle("warning", Boolean(warning));
     }
@@ -1288,7 +1159,8 @@ function setFlashcardVisibility(hasWord) {
             button.disabled = !state.bootstrap.aiEnabled;
             button.title = state.bootstrap.aiEnabled
                 ? ""
-                : "Tính năng AI hiện đang bảo trì hoặc chưa khả dụng. Vui lòng thử lại sau.";
+                // Sửa câu thông báo khi di chuột vào nút bị khóa thành văn phong lịch sự
+                : "Tính năng Trợ lý AI hiện đang bảo trì hoặc chưa khả dụng. Vui lòng thử lại sau."; 
         });
     }
 
@@ -1296,13 +1168,17 @@ function setFlashcardVisibility(hasWord) {
         try {
             const bootstrap = await api.getBootstrap();
             state.bootstrap = bootstrap;
+
             if (bootstrap.aiEnabled) {
+                // Câu thông báo thương mại, tri thức (hoặc nó sẽ ẩn luôn nếu đại ca đã xóa banner)
                 updateStatusBanner("Hệ thống ZeroEnglish đã kết nối. Trợ lý AI học thuật sẵn sàng.", false);
             } else {
+                // Sửa thông báo lỗi mất key AI
                 updateStatusBanner("Hệ thống AI đang bảo trì. Các tính năng luyện tập tiêu chuẩn vẫn hoạt động bình thường.", true);
             }
         } catch (error) {
-            updateStatusBanner("Không thể kết nối đến máy chủ. Vui lòng kiểm tra lại đường truyền internet.", true);
+            // Sửa thông báo khi web bị mất kết nối hoàn toàn
+            updateStatusBanner("Không thể kết nối đến máy chủ học thuật. Vui lòng kiểm tra lại đường truyền internet của bạn.", true);
         } finally {
             syncStrictAiButtons();
         }
@@ -1316,11 +1192,12 @@ function setFlashcardVisibility(hasWord) {
         initChat();
         initListening();
         initMatching();
-        initChinese();
         initBootstrapStatus();
 
         window.addEventListener("beforeunload", () => {
-            if (window.speechSynthesis) window.speechSynthesis.cancel();
+            if (window.speechSynthesis) {
+                window.speechSynthesis.cancel();
+            }
         });
     }
 
