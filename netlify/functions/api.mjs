@@ -327,19 +327,34 @@ async function handleAdminStatus(request) {
 
 async function handleTopic(body) {
   const topic = cleanText(body.topic, { maxLength: 80 });
+  
+  // 1. Giảm temperature xuống 0.2 để AI bớt "ngáo", tập trung vào cấu trúc
   const rawData = await groqJson(
-    "You generate safe JSON for a Vietnamese English-learning app. Never return markdown, code fences, HTML, or explanations.",
-    `Tạo 16 từ tiếng Anh theo chủ đề "${topic}". Trả về duy nhất một JSON array dạng: [{"en":"word","vi":"nghĩa tiếng Việt","pro":"/phiên âm/","ex":"Ví dụ ngắn"}].`,
-    0.45,
+    "You are a vocabulary generator. Return ONLY a plain JSON array. No markdown, no fences, no preamble.",
+    `Tạo 16 từ tiếng Anh theo chủ đề "${topic}". Định dạng JSON: [{"en":"word","vi":"nghĩa","pro":"/phiên âm/","ex":"ví dụ"}].`,
+    0.2 
   );
 
-  if (!Array.isArray(rawData)) {
-    throw new Error("AI không trả về danh sách từ.");
+  // 2. Kiểm tra kỹ hơn dữ liệu trả về
+  if (!rawData || !Array.isArray(rawData)) {
+    console.error("AI Payload Error:", rawData); // Log để đại ca dễ debug
+    throw new Error("AI không trả về danh sách từ hợp lệ. Thử lại phát nữa xem đại ca!");
   }
 
-  const words = rawData.slice(0, 20).map(normalizeWordEntry);
-  if (words.length < 6) {
-    throw new Error("AI chưa tạo đủ bộ từ hợp lệ.");
+  // 3. Lọc bỏ những mục bị lỗi để không làm sập cả danh sách
+  const words = rawData
+    .slice(0, 20)
+    .map(item => {
+        try {
+            return normalizeWordEntry(item);
+        } catch (e) {
+            return null; // Bỏ qua từ bị lỗi định dạng
+        }
+    })
+    .filter(Boolean); // Chỉ giữ lại những từ chuẩn
+
+  if (words.length < 4) {
+    throw new Error("AI tạo bộ từ chưa đạt chuẩn số lượng. Đại ca bấm lại lần nữa nhé!");
   }
 
   return jsonResponse({ topic, words });
