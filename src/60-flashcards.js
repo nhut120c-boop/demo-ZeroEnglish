@@ -183,12 +183,13 @@ function setFlashcardVisibility(hasWord) {
     }
 
     function initFlashcards() {
-        // [ĐÃ ĐỘ LẠI]: Bỏ hết pointerdown, pointerup phức tạp. Thay bằng 1 event click cực mượt cho cả Touch và Chuột.
+        // 1. Lật thẻ chỉ bằng 1 thao tác chạm/click duy nhất
         refs.flashcard.addEventListener("click", (event) => {
             event.preventDefault();
             toggleFlashcard();
         });
 
+        // 2. Giữ nguyên lật thẻ bằng phím Enter/Space cho PC
         refs.flashcard.addEventListener("keydown", (event) => {
             if (event.key !== "Enter" && event.key !== " ") {
                 return;
@@ -197,10 +198,12 @@ function setFlashcardVisibility(hasWord) {
             toggleFlashcard();
         });
 
+        // 3. Các nút điều khiển giữ nguyên
         refs.prevBtn.addEventListener("click", () => stepCard(-1));
         refs.nextBtn.addEventListener("click", () => stepCard(1));
         refs.generateBtn.addEventListener("click", handleTopicGeneration);
         refs.explainGrammarBtn.addEventListener("click", handleExplainGrammar);
+        
         refs.saveWordBtn.addEventListener("click", () => {
             const currentWord = getCurrentWord();
             if (!currentWord) {
@@ -236,7 +239,7 @@ function setFlashcardVisibility(hasWord) {
             if (!state.savedWordsList.length) {
                 return;
             }
-            if (!window.confirm("Xác nhận làm sạch toàn bộ dữ liệu trong Sổ tay thuật ngữ?")) {
+            if (!window.confirm("Bạn muốn xóa toàn bộ từ đã lưu chứ?")) {
                 return;
             }
             state.savedWordsList = [];
