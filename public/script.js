@@ -596,21 +596,18 @@ function setFlashcardVisibility(hasWord) {
         refs.saveWordBtn.textContent = isSavedWord(currentWord) ? "Hủy lưu thuật ngữ" : "Lưu thuật ngữ";
     }
 
-   function resetFlashcardFlip() {
-        // 1. Dùng setProperty kèm '!important' để bóp nghẹt hoàn toàn hiệu ứng CSS
-        refs.flashcard.style.setProperty('transition', 'none', 'important');
-        
-        // 2. Gỡ class lật, đưa thẻ về mặt trước ngay trong chớp mắt
+    function resetFlashcardFlip() {
+        // Tắt hiệu ứng chuyển cảnh để trả về mặt trước ngay lập tức
+        refs.flashcard.style.transition = 'none';
         refs.flashcard.classList.remove("is-flipped");
         
-        // 3. Ép trình duyệt chốt ngay trạng thái không hiệu ứng (Force reflow)
+        // Ép trình duyệt cập nhật lại trạng thái (force reflow)
         void refs.flashcard.offsetHeight;
         
-        // 4. Cho thời gian chờ dài hơn hẳn (100ms) để chữ mới nạp xong xuôi
-        // rồi mới trả lại hiệu ứng xoay để click vào thẻ vẫn lật mượt mà
+        // Khôi phục lại hiệu ứng xoay cho lần click lật thẻ sau đó
         setTimeout(() => {
             refs.flashcard.style.transition = '';
-        }, 100);
+        }, 10);
     }
 
     function stepCard(delta) {

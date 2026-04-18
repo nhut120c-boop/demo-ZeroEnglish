@@ -302,11 +302,8 @@ select:focus {
     inset: 0;
     display: flex;
     flex-direction: column;
-    
-    /* Thuộc tính xịn sò: Chữ ngắn thì nó căn giữa thẻ, chữ dài quá thì nó tự đẩy lên sát top để cuộn xuống, tuyệt đối không bị mất phần đầu */
-    justify-content: safe center; 
-    
     align-items: center;
+    justify-content: center;
     gap: 12px;
     padding: 25px;
     border-radius: 28px;
@@ -314,27 +311,30 @@ select:focus {
     -webkit-backface-visibility: hidden !important;
     text-align: center;
     box-shadow: var(--shadow-sm);
-    
-    /* Bật thanh cuộn dọc khi nội dung vượt quá chiều cao thẻ */
-    overflow-y: auto; 
-    overflow-x: hidden;
+    overflow: hidden;
+    /* Ép trình duyệt render phẳng để chống lỗi hiển thị */
     transform: translateZ(0); 
 }
+
 /* FIX: Tràn chữ mặt trước và mất chữ mặt sau */
 .word-main {
-    font-size: clamp(20px, 4vw, 38px);
+    font-size: clamp(20px, 4vw, 38px); 
     font-weight: 800;
-    line-height: 1.4 !important; 
+    line-height: 1.2;
     width: 100%;
     text-align: center;
     word-wrap: break-word;
-    overflow-wrap: break-word; 
     
-    display: block !important; 
-    overflow: visible !important; 
+    /* FIX CẢNH BÁO VS CODE & TRÀN CHỮ */
+    display: -webkit-box;
+    -webkit-line-clamp: 4; /* Cho Webkit (Chrome, Cốc Cốc, Safari) */
+    line-clamp: 4;         /* Thuộc tính tiêu chuẩn (Xóa lỗi xanh) */
+    -webkit-box-orient: vertical;
     
+    overflow: hidden;
     color: inherit;
 }
+
 .card-front {
     background: #ffffff;
     border: 2px solid rgba(13, 110, 253, 0.25); /* Viền xanh nhạt chuyên nghiệp */
