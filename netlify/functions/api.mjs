@@ -1,4 +1,4 @@
-import { timingSafeEqual, createHmac } from "node:crypto";
+import { timingSafeEqual, createHmac } from "crypto";
 
 const BRAND = "ZeroEnglish";
 
