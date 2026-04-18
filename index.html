@@ -144,27 +144,22 @@
                 </div>
             </section>
 
-            <section id="ai-tutor-view" class="view-section hidden">
-    <div class="flex-col" style="width: 100%;">
-        <div class="chat-wrapper">
-            <div class="chat-header">
-                <h2>Gia sư AI</h2>
-                <p>Trao đổi trực tiếp với trợ lý học thuật để giải đáp chuyên sâu</p>
-            </div>
-            
-            <div class="chat-box" id="chat-messages">
-                <div class="message ai-message">
-                    <div class="msg-bubble">Xin chào! Tôi là trợ lý học thuật của ZeroEnglish. Bạn cần hỗ trợ chuyên sâu về từ vựng, ngữ pháp hay kỹ năng giao tiếp?</div>
+            <section id="view-chat" class="view-section hidden flex-col">
+                <div class="chat-header">
+                    <h2>Gia sư AI</h2>
+                    <p>Trao đổi trực tiếp với trợ lý học thuật để giải đáp chuyên sâu các vướng mắc về ngôn ngữ.</p>
                 </div>
+                <div id="chatBox" class="chat-box" aria-live="polite">
+                    <div class="message ai-message">
+                        <div class="msg-bubble">Xin chào, tôi là trợ lý học thuật của ZeroEnglish. Bạn cần hỗ trợ chuyên sâu về từ vựng, ngữ pháp hay kỹ năng giao tiếp?</div>
+                    </div>
                 </div>
+                <div class="chat-input-area">
+                    <input type="text" id="chatInput" placeholder="Nhập yêu cầu hỗ trợ và nhấn Enter">
+                    <button id="sendChatBtn" class="btn-primary" data-ai-required="strict" type="button">Gửi yêu cầu</button>
+                </div>
+            </section>
 
-            <div class="chat-input-area">
-                <input type="text" id="chat-input" placeholder="Nhập câu hỏi của bạn vào đây...">
-                <button class="btn-primary" id="send-chat-btn">Gửi yêu cầu</button>
-            </div>
-        </div>
-    </div>
-</section>
             <section id="view-listening" class="view-section hidden flex-col">
                 <div class="section-head">
                     <div>
