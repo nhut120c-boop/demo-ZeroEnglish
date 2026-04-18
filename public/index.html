@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ZeroEnglish - Nền Tảng Học Thuật Thông Minh</title>
-    <meta name="description" content="ZeroEnglish - Hệ thống học tiếng Anh ứng dụng AI, tối ưu hóa lộ trình phát triển kỹ năng ngoại ngữ chuyên sâu.">
+    <title>ZeroEnglish & ZeroChinese - Nền Tảng Học Thuật Thông Minh</title>
+    <meta name="description" content="Hệ thống học tiếng Anh và tiếng Trung ứng dụng AI.">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -12,48 +12,68 @@
         <header class="navbar">
             <div class="brand-block">
                 <p class="brand-kicker">Hệ Thống Phân Tích Ngôn Ngữ</p>
-                <h1 class="logo">ZeroEnglish</h1>
-                <p class="brand-copy">Nền tảng ứng dụng trí tuệ nhân tạo trong việc tối ưu hóa lộ trình học thuật và phát triển kỹ năng ngoại ngữ chuyên sâu.</p>
+                <h1 class="logo">Zero<span style="color:var(--accent-secondary,#e53935)">Language</span></h1>
+                <p class="brand-copy">Nền tảng ứng dụng trí tuệ nhân tạo tối ưu hóa lộ trình học tiếng Anh &amp; tiếng Trung chuyên sâu.</p>
             </div>
         </header>
 
-        <nav class="tabs" aria-label="Điều hướng chính">
+        <!-- ═══════════════ LANGUAGE SWITCHER ════════════════ -->
+        <div class="lang-switcher">
+            <button class="lang-btn active" data-lang="en" type="button">🇬🇧 Tiếng Anh</button>
+            <button class="lang-btn" data-lang="cn" type="button">🇨🇳 Tiếng Trung</button>
+        </div>
+
+        <!-- ═══════════════ ENGLISH TABS ════════════════════ -->
+        <nav class="tabs lang-panel lang-panel-en" aria-label="Tiếng Anh">
             <button class="tab-btn active" data-target="view-flashcard" type="button">Thẻ từ</button>
             <button class="tab-btn" data-target="view-reading" type="button">Đọc hiểu AI</button>
             <button class="tab-btn" data-target="view-grammar" type="button">Ngữ pháp</button>
             <button class="tab-btn" data-target="view-chat" type="button">Gia sư AI</button>
             <button class="tab-btn" data-target="view-listening" type="button">Luyện nghe</button>
-            <button class="tab-btn" data-target="view-matching" type="button">Ghép từ AI</button>
+            <button class="tab-btn" data-target="view-matching" type="button">Ghép từ</button>
             <button class="tab-btn" data-target="view-saved" type="button">Sổ tay</button>
         </nav>
 
+        <!-- ═══════════════ CHINESE TABS ════════════════════ -->
+        <nav class="tabs lang-panel lang-panel-cn hidden" aria-label="Tiếng Trung">
+            <button class="tab-btn active" data-target="view-cn-flashcard" type="button">Thẻ từ</button>
+            <button class="tab-btn" data-target="view-cn-reading" type="button">Đọc hiểu AI</button>
+            <button class="tab-btn" data-target="view-cn-listening" type="button">Luyện nghe</button>
+            <button class="tab-btn" data-target="view-cn-matching" type="button">Ghép từ</button>
+            <button class="tab-btn" data-target="view-cn-saved" type="button">Sổ tay</button>
+        </nav>
+
+        <div id="appStatusBanner" class="status-banner hidden"></div>
+
         <main class="app-container">
-            <section id="view-flashcard" class="view-section">
+
+            <!-- ════════════════════════════════════════════════ -->
+            <!--                ENGLISH VIEWS                     -->
+            <!-- ════════════════════════════════════════════════ -->
+
+            <section id="view-flashcard" class="view-section lang-panel lang-panel-en">
                 <aside class="sidebar">
                     <div class="panel-heading">
                         <h2>Chủ đề học thuật</h2>
                         <p>Xây dựng lộ trình từ vựng cá nhân hóa theo định hướng học tập.</p>
                     </div>
                     <div class="input-group">
-                        <input type="text" id="topicInput" placeholder="Ví dụ: Kinh tế vĩ mô, IELTS, Công nghệ...">
-                        <button id="generateBtn" class="btn-primary" type="button">Khởi tạo dữ liệu</button>
+                        <input type="text" id="topicInput" placeholder="Ví dụ: Kinh tế vĩ mô, IELTS...">
+                        <button id="generateBtn" class="btn-primary" data-ai-required="strict" type="button">Khởi tạo dữ liệu</button>
                     </div>
                     <p id="loadingMsg" class="status-note hidden">Hệ thống đang tổng hợp dữ liệu...</p>
                     <ul id="topicList" class="topic-list"></ul>
                 </aside>
-
                 <div class="main-content">
                     <div id="flashcardPlaceholder" class="empty-state-wrapper">
                         <div class="empty-state-icon">🗂️</div>
                         <h3>Hệ thống sẵn sàng</h3>
-                        <p>Vui lòng khởi tạo hoặc chọn một chủ đề học thuật từ danh sách bên trái để bắt đầu quá trình ghi nhớ.</p>
+                        <p>Vui lòng khởi tạo hoặc chọn một chủ đề từ danh sách bên trái.</p>
                     </div>
-
                     <div class="content-heading hidden" id="flashcardHeader">
                         <h2 id="currentTopicTitle">Chủ đề hiện tại</h2>
                         <p id="progressText">0 / 0</p>
                     </div>
-
                     <div id="cardContainer" class="flashcard-container hidden">
                         <button id="flashcard" class="flashcard" type="button">
                             <span class="card-face card-front">
@@ -62,21 +82,18 @@
                             </span>
                             <span class="card-face card-back">
                                 <span id="wordVi" class="word-main word-main-vi">Định nghĩa</span>
-                                <span id="wordEx" class="example">Câu ví dụ minh họa ngữ cảnh.</span>
+                                <span id="wordEx" class="example">Câu ví dụ.</span>
                             </span>
                         </button>
                     </div>
-
                     <div id="actionButtons" class="action-buttons hidden">
                         <button id="saveWordBtn" class="btn-warning" type="button">Lưu thuật ngữ</button>
-                        <button id="explainGrammarBtn" class="btn-success" type="button">Phân tích cấu trúc</button>
+                        <button id="explainGrammarBtn" class="btn-success" data-ai-required="strict" type="button">Phân tích cấu trúc</button>
                     </div>
-
                     <div id="explanationBox" class="panel-note hidden">
                         <strong>Phân tích ngữ pháp chuyên sâu</strong>
                         <p id="explanationText"></p>
                     </div>
-
                     <div id="controls" class="controls hidden">
                         <button id="prevBtn" class="btn-secondary" type="button">Quay lại</button>
                         <button id="nextBtn" class="btn-primary" type="button">Tiếp theo</button>
@@ -84,7 +101,7 @@
                 </div>
             </section>
 
-            <section id="view-reading" class="view-section hidden flex-col">
+            <section id="view-reading" class="view-section lang-panel lang-panel-en hidden flex-col">
                 <div class="section-head">
                     <div>
                         <h2>Phân tích văn bản</h2>
@@ -96,25 +113,19 @@
                             <option value="medium">Trung cấp (B1-B2)</option>
                             <option value="hard">Cao cấp (C1-C2)</option>
                         </select>
-                        <button id="generateReadingBtn" class="btn-primary" type="button">Khởi tạo văn bản</button>
+                        <button id="generateReadingBtn" class="btn-primary" data-ai-required="strict" type="button">Khởi tạo văn bản</button>
                     </div>
                 </div>
-
-                <div id="readingPlaceholder" class="empty-state-wrapper">
-                    <div class="empty-state-icon">📖</div>
-                    <h3>Dữ liệu phân tích trống</h3>
-                    <p>Vui lòng lựa chọn khung năng lực và khởi tạo văn bản để bắt đầu quá trình phân tích ngôn ngữ học thuật.</p>
-                </div>
-
+                <p id="readingLoadingMsg" class="status-note hidden">Đang tạo bài đọc...</p>
                 <div id="readingBox" class="content-box hidden">
                     <h3 id="readingTitle"></h3>
                     <div id="readingContent" class="reading-text"></div>
-                    <button id="toggleTranslationBtn" class="btn-secondary" type="button">Hiển thị bản dịch</button>
+                    <button id="toggleTranslationBtn" class="btn-secondary" type="button">Xem bản dịch đầy đủ</button>
                     <div id="fullTranslationBox" class="full-translation-box hidden"></div>
                 </div>
             </section>
 
-            <section id="view-grammar" class="view-section hidden flex-col">
+            <section id="view-grammar" class="view-section lang-panel lang-panel-en hidden flex-col">
                 <div class="section-head">
                     <div>
                         <h2>Ngữ pháp nền tảng</h2>
@@ -126,84 +137,66 @@
                             <option value="Thì quá khứ đơn">Thì quá khứ đơn</option>
                             <option value="Mệnh đề quan hệ">Mệnh đề quan hệ</option>
                         </select>
-                        <button id="generateGrammarBtn" class="btn-primary" type="button">Biên soạn tài liệu</button>
+                        <button id="generateGrammarBtn" class="btn-primary" data-ai-required="strict" type="button">Biên soạn tài liệu</button>
                     </div>
                 </div>
-
-                <div id="grammarPlaceholder" class="empty-state-wrapper">
-                    <div class="empty-state-icon">🧩</div>
-                    <h3>Trung tâm dữ liệu cấu trúc</h3>
-                    <p>Chọn chủ đề ngữ pháp cần củng cố kiến thức để hệ thống xuất bản tài liệu hướng dẫn và ví dụ minh họa.</p>
-                </div>
-
+                <p id="grammarLoadingMsg" class="status-note hidden">Đang biên soạn tài liệu ngữ pháp...</p>
                 <div id="grammarBox" class="content-box hidden">
                     <h3 id="grammarTitle" class="grammar-title"></h3>
-                    <div class="grammar-card">
-                        <h4>Công thức cấu trúc</h4>
-                        <p id="grammarFormula" class="grammar-formula"></p>
-                    </div>
-                    <div class="grammar-card">
-                        <h4>Nguyên tắc sử dụng</h4>
-                        <p id="grammarUsage"></p>
-                    </div>
+                    <div class="grammar-card"><h4>Công thức cấu trúc</h4><p id="grammarFormula" class="grammar-formula"></p></div>
+                    <div class="grammar-card"><h4>Nguyên tắc sử dụng</h4><p id="grammarUsage"></p></div>
                     <ul id="grammarExamples" class="grammar-examples"></ul>
                 </div>
             </section>
 
-            <section id="view-chat" class="view-section hidden flex-col">
+            <section id="view-chat" class="view-section lang-panel lang-panel-en hidden flex-col">
                 <div class="chat-header">
                     <h2>Trung tâm hỗ trợ học thuật</h2>
                     <p>Giải đáp thắc mắc về ngôn ngữ và cấu trúc chuyên sâu 24/7.</p>
                 </div>
                 <div id="chatBox" class="chat-box" aria-live="polite">
                     <div class="message ai-message">
-                        <div class="msg-bubble">
-                            <strong>Hệ thống trực tuyến.</strong><br>
-                            Vui lòng nhập câu hỏi hoặc yêu cầu phân tích ngữ nghĩa để nhận phản hồi từ trợ lý học thuật.
-                        </div>
+                        <div class="msg-bubble"><strong>Hệ thống trực tuyến.</strong><br>Vui lòng nhập câu hỏi để nhận phản hồi từ trợ lý học thuật.</div>
                     </div>
                 </div>
                 <div class="chat-input-area">
                     <input type="text" id="chatInput" placeholder="Nhập yêu cầu truy vấn học thuật...">
-                    <button id="sendChatBtn" class="btn-primary" type="button">Gửi truy vấn</button>
+                    <button id="sendChatBtn" class="btn-primary" data-ai-required="strict" type="button">Gửi truy vấn</button>
                 </div>
             </section>
 
-            <section id="view-listening" class="view-section hidden flex-col">
+            <section id="view-listening" class="view-section lang-panel lang-panel-en hidden flex-col">
                 <div class="section-head">
                     <div>
                         <h2>Kiểm tra thính lực</h2>
-                        <p>Đánh giá năng lực tiếp nhận thông tin qua âm thanh và bài thi kiểm tra.</p>
+                        <p>Đánh giá năng lực tiếp nhận thông tin qua âm thanh.</p>
                     </div>
                     <div class="section-actions">
                         <select id="listenLevelSelect">
                             <option value="easy">Sơ cấp (A1-A2)</option>
                             <option value="medium">Trung cấp (B1-B2)</option>
                         </select>
-                        <button id="generateListenBtn" class="btn-primary" type="button">Khởi tạo bài thi</button>
+                        <button id="generateListenBtn" class="btn-primary" data-ai-required="strict" type="button">Khởi tạo bài thi</button>
                     </div>
                 </div>
-
-                <div id="listeningPlaceholder" class="empty-state-wrapper">
-                    <div class="empty-state-icon">🎧</div>
-                    <h3>Trạm luyện thính giác</h3>
-                    <p>Vui lòng lựa chọn cấp độ và khởi tạo bài kiểm tra để bắt đầu đánh giá năng lực nghe hiểu.</p>
-                </div>
-
+                <p id="listenLoadingMsg" class="status-note hidden">Đang tạo bài nghe...</p>
                 <div id="listeningBox" class="content-box hidden">
                     <div class="audio-controls">
-                        <button id="playAudioBtn" class="btn-success" type="button">Phát Audio</button>
-                        <button id="stopAudioBtn" class="btn-danger" type="button">Dừng phát</button>
+                        <button id="playAudioBtn" class="btn-success" type="button">▶ Phát Audio</button>
+                        <button id="pauseAudioBtn" class="btn-secondary" type="button">⏸ Tạm dừng</button>
+                        <button id="stopAudioBtn" class="btn-danger" type="button">⏹ Dừng phát</button>
                     </div>
                     <div id="quizContainer" class="quiz-container"></div>
                     <div class="listen-actions">
                         <button id="submitQuizBtn" class="btn-primary" type="button">Hoàn thành bài</button>
+                        <button id="showTranscriptBtn" class="btn-secondary hidden" type="button">Xem lời thoại</button>
                     </div>
                     <div id="quizResult" class="quiz-result hidden"></div>
+                    <div id="transcriptBox" class="transcript-box hidden"></div>
                 </div>
             </section>
 
-            <section id="view-matching" class="view-section hidden flex-col">
+            <section id="view-matching" class="view-section lang-panel lang-panel-en hidden flex-col">
                 <div class="section-head">
                     <div>
                         <h2>Ghép từ phản xạ</h2>
@@ -212,44 +205,185 @@
                     <div class="section-actions">
                         <select id="matchingLevelSelect">
                             <option value="easy">Cơ bản</option>
+                            <option value="medium">Trung cấp</option>
                             <option value="hard">Chuyên sâu</option>
                         </select>
                         <button id="generateMatchingBtn" class="btn-primary" type="button">Thiết lập dữ liệu</button>
                     </div>
                 </div>
-
-                <div id="matchingPlaceholder" class="empty-state-wrapper">
-                    <div class="empty-state-icon">🔗</div>
-                    <h3>Dữ liệu ghép cặp chưa sẵn sàng</h3>
-                    <p>Khởi tạo bảng ghép để bắt đầu luyện tập phản xạ kết nối thuật ngữ và định nghĩa tương ứng.</p>
-                </div>
-
+                <p id="matchingLoadingMsg" class="status-note hidden">Đang tải bộ ghép từ...</p>
                 <div id="matchingBox" class="content-box hidden">
+                    <div class="matching-header">
+                        <span id="matchingProgressText">0 / 0 cặp đúng</span>
+                        <button id="resetMatchingBtn" class="btn-secondary" type="button">Trộn lại</button>
+                    </div>
                     <div class="matching-board">
-                        <div class="matching-column">
-                            <h3>Thuật ngữ</h3>
-                            <div id="matchingEnList" class="matching-list"></div>
-                        </div>
-                        <div class="matching-column">
-                            <h3>Định nghĩa</h3>
-                            <div id="matchingViList" class="matching-list"></div>
-                        </div>
+                        <div class="matching-column"><h3>Tiếng Anh</h3><div id="matchingEnList" class="matching-list"></div></div>
+                        <div class="matching-column"><h3>Tiếng Việt</h3><div id="matchingViList" class="matching-list"></div></div>
                     </div>
                     <div id="matchingFeedback" class="matching-feedback">Vui lòng chọn các cặp từ tương ứng.</div>
                 </div>
             </section>
 
-            <section id="view-saved" class="view-section hidden flex-col">
+            <section id="view-saved" class="view-section lang-panel lang-panel-en hidden flex-col">
                 <div class="saved-header">
                     <div>
-                        <h2>Sổ tay thuật ngữ chuyên sâu</h2>
-                        <p>Danh sách các thuật ngữ trọng tâm được lưu trữ phục vụ quá trình ôn tập định kỳ.</p>
+                        <h2>Sổ tay thuật ngữ Tiếng Anh</h2>
+                        <p>Danh sách các thuật ngữ trọng tâm đã lưu.</p>
                     </div>
                     <button id="clearSavedBtn" class="btn-danger" type="button">Xóa toàn bộ</button>
                 </div>
-                <div id="savedWordsGrid" class="saved-grid">
-                    </div>
+                <div id="savedWordsGrid" class="saved-grid"></div>
             </section>
+
+            <!-- ════════════════════════════════════════════════ -->
+            <!--                CHINESE VIEWS                     -->
+            <!-- ════════════════════════════════════════════════ -->
+
+            <section id="view-cn-flashcard" class="view-section lang-panel lang-panel-cn hidden">
+                <aside class="sidebar">
+                    <div class="panel-heading">
+                        <h2>主题 — Chủ đề</h2>
+                        <p>Học từ vựng tiếng Trung theo chủ đề.</p>
+                    </div>
+                    <div class="input-group">
+                        <input type="text" id="cnTopicInput" placeholder="Ví dụ: Ẩm thực, Du lịch, Kinh doanh...">
+                        <button id="cnGenerateBtn" class="btn-primary" data-ai-required="strict" type="button">Khởi tạo từ AI</button>
+                    </div>
+                    <p id="cnLoadingMsg" class="status-note hidden">Đang tổng hợp từ tiếng Trung...</p>
+                    <ul id="cnTopicList" class="topic-list"></ul>
+                </aside>
+                <div class="main-content">
+                    <div id="cnFlashcardPlaceholder" class="empty-state-wrapper">
+                        <div class="empty-state-icon">🀄</div>
+                        <h3>Hệ thống sẵn sàng</h3>
+                        <p>Chọn hoặc tạo chủ đề tiếng Trung để bắt đầu học.</p>
+                    </div>
+                    <div class="content-heading hidden" id="cnFlashcardHeader">
+                        <h2 id="cnCurrentTopicTitle">Chủ đề hiện tại</h2>
+                        <p id="cnProgressText">0 / 0</p>
+                    </div>
+                    <div id="cnCardContainer" class="flashcard-container hidden">
+                        <button id="cnFlashcard" class="flashcard" type="button">
+                            <span class="card-face card-front">
+                                <span id="cnWordZh" class="word-main" style="font-size:2.4rem;letter-spacing:0.1em;">汉字</span>
+                                <span id="cnWordPro" class="word-pro">pīnyīn</span>
+                            </span>
+                            <span class="card-face card-back">
+                                <span id="cnWordVi" class="word-main word-main-vi">Nghĩa tiếng Việt</span>
+                                <span id="cnWordEx" class="example">Câu ví dụ.</span>
+                            </span>
+                        </button>
+                    </div>
+                    <div id="cnActionButtons" class="action-buttons hidden">
+                        <button id="cnSaveWordBtn" class="btn-warning" type="button">Lưu từ</button>
+                        <button id="cnExplainBtn" class="btn-success" data-ai-required="strict" type="button">Phân tích câu</button>
+                    </div>
+                    <div id="cnExplanationBox" class="panel-note hidden">
+                        <strong>Phân tích câu tiếng Trung</strong>
+                        <p id="cnExplanationText"></p>
+                    </div>
+                    <div id="cnControls" class="controls hidden">
+                        <button id="cnPrevBtn" class="btn-secondary" type="button">Quay lại</button>
+                        <button id="cnNextBtn" class="btn-primary" type="button">Tiếp theo</button>
+                    </div>
+                </div>
+            </section>
+
+            <section id="view-cn-reading" class="view-section lang-panel lang-panel-cn hidden flex-col">
+                <div class="section-head">
+                    <div>
+                        <h2>阅读理解 — Đọc hiểu</h2>
+                        <p>Đọc văn bản tiếng Trung và tra nghĩa từng từ.</p>
+                    </div>
+                    <div class="section-actions">
+                        <select id="cnLevelSelect">
+                            <option value="easy">Sơ cấp (HSK 1-2)</option>
+                            <option value="medium">Trung cấp (HSK 3-4)</option>
+                            <option value="hard">Cao cấp (HSK 5-6)</option>
+                        </select>
+                        <button id="cnGenerateReadingBtn" class="btn-primary" data-ai-required="strict" type="button">Tạo bài đọc</button>
+                    </div>
+                </div>
+                <p id="cnReadingLoadingMsg" class="status-note hidden">Đang tạo bài đọc tiếng Trung...</p>
+                <div id="cnReadingBox" class="content-box hidden">
+                    <h3 id="cnReadingTitle"></h3>
+                    <div id="cnReadingContent" class="reading-text cn-text"></div>
+                    <button id="cnToggleTranslationBtn" class="btn-secondary" type="button">Xem bản dịch đầy đủ</button>
+                    <div id="cnFullTranslationBox" class="full-translation-box hidden"></div>
+                </div>
+            </section>
+
+            <section id="view-cn-listening" class="view-section lang-panel lang-panel-cn hidden flex-col">
+                <div class="section-head">
+                    <div>
+                        <h2>听力练习 — Luyện nghe</h2>
+                        <p>Nghe tiếng Trung và trả lời câu hỏi trắc nghiệm.</p>
+                    </div>
+                    <div class="section-actions">
+                        <select id="cnListenLevelSelect">
+                            <option value="easy">Sơ cấp (HSK 1-2)</option>
+                            <option value="medium">Trung cấp (HSK 3-4)</option>
+                        </select>
+                        <button id="cnGenerateListenBtn" class="btn-primary" data-ai-required="strict" type="button">Tạo bài nghe</button>
+                    </div>
+                </div>
+                <p id="cnListenLoadingMsg" class="status-note hidden">Đang tạo bài nghe tiếng Trung...</p>
+                <div id="cnListeningBox" class="content-box hidden">
+                    <div class="audio-controls">
+                        <button id="cnPlayAudioBtn" class="btn-success" type="button">▶ Phát Audio</button>
+                        <button id="cnStopAudioBtn" class="btn-danger" type="button">⏹ Dừng phát</button>
+                    </div>
+                    <div id="cnQuizContainer" class="quiz-container"></div>
+                    <div class="listen-actions">
+                        <button id="cnSubmitQuizBtn" class="btn-primary" type="button">Hoàn thành bài</button>
+                        <button id="cnShowTranscriptBtn" class="btn-secondary hidden" type="button">Xem lời thoại</button>
+                    </div>
+                    <div id="cnQuizResult" class="quiz-result hidden"></div>
+                    <div id="cnTranscriptBox" class="transcript-box cn-text hidden"></div>
+                </div>
+            </section>
+
+            <section id="view-cn-matching" class="view-section lang-panel lang-panel-cn hidden flex-col">
+                <div class="section-head">
+                    <div>
+                        <h2>配对练习 — Ghép từ</h2>
+                        <p>Ghép chữ Hán với nghĩa tiếng Việt tương ứng.</p>
+                    </div>
+                    <div class="section-actions">
+                        <select id="cnMatchingLevelSelect">
+                            <option value="easy">Cơ bản</option>
+                            <option value="medium">Trung cấp</option>
+                            <option value="hard">Chuyên sâu</option>
+                        </select>
+                        <button id="cnGenerateMatchingBtn" class="btn-primary" type="button">Thiết lập dữ liệu</button>
+                    </div>
+                </div>
+                <p id="cnMatchingLoadingMsg" class="status-note hidden">Đang tải bộ ghép từ...</p>
+                <div id="cnMatchingBox" class="content-box hidden">
+                    <div class="matching-header">
+                        <span id="cnMatchingProgressText">0 / 0 cặp đúng</span>
+                        <button id="cnResetMatchingBtn" class="btn-secondary" type="button">Trộn lại</button>
+                    </div>
+                    <div class="matching-board">
+                        <div class="matching-column"><h3>Chữ Hán</h3><div id="cnMatchingZhList" class="matching-list cn-text"></div></div>
+                        <div class="matching-column"><h3>Tiếng Việt</h3><div id="cnMatchingViList" class="matching-list"></div></div>
+                    </div>
+                    <div id="cnMatchingFeedback" class="matching-feedback">Vui lòng chọn các cặp từ tương ứng.</div>
+                </div>
+            </section>
+
+            <section id="view-cn-saved" class="view-section lang-panel lang-panel-cn hidden flex-col">
+                <div class="saved-header">
+                    <div>
+                        <h2>生词本 — Sổ tay Tiếng Trung</h2>
+                        <p>Danh sách các từ tiếng Trung đã lưu.</p>
+                    </div>
+                    <button id="cnClearSavedBtn" class="btn-danger" type="button">Xóa toàn bộ</button>
+                </div>
+                <div id="cnSavedWordsGrid" class="saved-grid"></div>
+            </section>
+
         </main>
     </div>
 

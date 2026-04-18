@@ -463,6 +463,109 @@ function resolveEndpoint(pathname) {
   return pathname.replace(/^\/api\/?/, "");
 }
 
+
+
+// ─────────────────────────────────────────────────────
+// CHINESE HANDLERS
+// ─────────────────────────────────────────────────────
+
+const CN_MATCHING_FALLBACK = {
+  easy: [
+    { en: "你好", vi: "Xin chào" }, { en: "谢谢", vi: "Cảm ơn" },
+    { en: "再见", vi: "Tạm biệt" }, { en: "吃饭", vi: "Ăn cơm" },
+    { en: "学习", vi: "Học tập" }, { en: "朋友", vi: "Bạn bè" },
+  ],
+  medium: [
+    { en: "工作", vi: "Công việc" }, { en: "问题", vi: "Vấn đề" },
+    { en: "时间", vi: "Thời gian" }, { en: "城市", vi: "Thành phố" },
+    { en: "文化", vi: "Văn hóa" }, { en: "旅游", vi: "Du lịch" },
+    { en: "经验", vi: "Kinh nghiệm" }, { en: "发展", vi: "Phát triển" },
+  ],
+  hard: [
+    { en: "可持续", vi: "Bền vững" }, { en: "透明度", vi: "Sự minh bạch" },
+    { en: "竞争力", vi: "Năng lực cạnh tranh" }, { en: "创新", vi: "Sáng tạo" },
+    { en: "效率", vi: "Hiệu quả" }, { en: "挑战", vi: "Thách thức" },
+    { en: "机遇", vi: "Cơ hội" }, { en: "战略", vi: "Chiến lược" },
+    { en: "合作", vi: "Hợp tác" }, { en: "影响", vi: "Ảnh hưởng" },
+  ],
+};
+
+async function handleChineseTopic(body) {
+  const topic = cleanText(body.topic, { maxLength: 80 });
+  const rawData = await groqJson(
+    "Bạn tạo từ điển tiếng Trung cho người Việt học. Chỉ trả JSON thuần, không markdown.",
+    `Tạo 16 từ tiếng Trung theo chủ đề "${topic}". Trả về duy nhất một JSON array: [{"zh":"汉字","vi":"nghĩa tiếng Việt","pro":"pinyin","ex":"Câu ví dụ tiếng Trung (phiên âm - dịch nghĩa)"}].`,
+    0.45,
+  );
+  if (!Array.isArray(rawData)) throw new Error("AI không trả về danh sách từ.");
+  const words = rawData.slice(0, 20).map((item) => ({
+    zh: cleanText(item.zh, { maxLength: 60 }),
+    vi: cleanText(item.vi, { maxLength: 120 }),
+    pro: cleanText(item.pro ?? "", { maxLength: 80, allowEmpty: true }) || "...",
+    ex: cleanText(item.ex, { maxLength: 300 }),
+  }));
+  if (words.length < 6) throw new Error("AI chưa tạo đủ bộ từ hợp lệ.");
+  return jsonResponse({ topic, words });
+}
+
+async function handleChineseExplain(body) {
+  const sentence = cleanText(body.sentence, { maxLength: 300 });
+  const rawData = await groqJson(
+    "Bạn là gia sư tiếng Trung. Chỉ trả JSON thuần, không markdown.",
+    `Giải thích ngắn gọn câu tiếng Trung sau cho người Việt: "${sentence}". Trả JSON: {"explanation":"..."}`,
+    0.2,
+  );
+  const explanation = cleanText(rawData?.explanation, { maxLength: 800 });
+  return jsonResponse({ explanation });
+}
+
+async function handleChineseReading(body) {
+  const level = parseLevel(body.level);
+  const rawData = await groqJson(
+    "Bạn tạo bài đọc tiếng Trung cho người Việt học. Chỉ trả JSON thuần.",
+    `Viết 1 đoạn tiếng Trung 60-90 từ ở mức ${LEVEL_LABELS[level]}. Kèm tiêu đề bằng tiếng Trung, bản dịch tiếng Việt và nghĩa các từ quan trọng. Trả JSON: {"title":"...","content":"...","translation":"...","vocab":{"汉字":"nghĩa"}}`,
+    0.45,
+  );
+  return jsonResponse({
+    title: cleanText(rawData?.title, { maxLength: 120 }),
+    content: cleanText(rawData?.content, { maxLength: 1200 }),
+    translation: cleanText(rawData?.translation, { maxLength: 1600 }),
+    vocab: normalizeVocabMap(rawData?.vocab),
+  });
+}
+
+async function handleChineseListening(body) {
+  const level = parseLevel(body.level);
+  const rawData = await groqJson(
+    "Bạn tạo bài nghe tiếng Trung cho người Việt. Chỉ trả JSON thuần.",
+    `Tạo transcript hội thoại tiếng Trung 50-80 từ ở mức ${LEVEL_LABELS[level]}. Sinh 3 câu trắc nghiệm bằng tiếng Việt, mỗi câu 4 lựa chọn và answerIndex. Trả JSON: {"transcript":"...","questions":[{"q":"...","options":["A","B","C","D"],"answerIndex":0}]}`,
+    0.25,
+  );
+  return jsonResponse({
+    transcript: cleanText(rawData?.transcript, { maxLength: 1400 }),
+    questions: normalizeQuestions(rawData?.questions),
+  });
+}
+
+async function handleChineseMatching(body) {
+  const level = parseLevel(body.level);
+  const aiEnabled = Boolean(process.env.GROQ_API_KEY?.trim() || process.env.ZEROENGLISH_GROQ_API_KEY?.trim());
+  if (!aiEnabled) {
+    const fallback = CN_MATCHING_FALLBACK[level].map((pair, index) => ({ id: index + 1, en: pair.en, vi: pair.vi }));
+    return jsonResponse({ pairs: fallback, levelLabel: LEVEL_LABELS[level], source: "fallback" });
+  }
+  const rawData = await groqJson(
+    "Bạn tạo bài ghép từ tiếng Trung - tiếng Việt. Chỉ trả JSON thuần.",
+    `Tạo bộ ghép từ tiếng Trung ở mức ${LEVEL_LABELS[level]}. Chỉ dùng từ hoặc cụm từ ngắn. Trả JSON: {"pairs":[{"en":"汉字","vi":"nghĩa tiếng Việt"}]}`,
+    0.35,
+  );
+  return jsonResponse({
+    pairs: normalizePairs(rawData?.pairs, level),
+    levelLabel: LEVEL_LABELS[level],
+    source: "ai",
+  });
+}
+
 export default async (request) => {
   if (request.method === "OPTIONS") {
     return new Response(null, { status: 204 });
@@ -504,6 +607,21 @@ export default async (request) => {
     }
     if (endpoint === "ai/matching") {
       return await handleMatching(body);
+    }
+    if (endpoint === "ai/cn/topic") {
+      return await handleChineseTopic(body);
+    }
+    if (endpoint === "ai/cn/explain") {
+      return await handleChineseExplain(body);
+    }
+    if (endpoint === "ai/cn/reading") {
+      return await handleChineseReading(body);
+    }
+    if (endpoint === "ai/cn/listening") {
+      return await handleChineseListening(body);
+    }
+    if (endpoint === "ai/cn/matching") {
+      return await handleChineseMatching(body);
     }
 
     return jsonResponse({ error: "Endpoint không tồn tại." }, 404);
