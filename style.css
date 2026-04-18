@@ -1,3 +1,4 @@
+
 :root {
     --bg-main: #eff4f8;
     --bg-card: rgba(255, 255, 255, 0.88);
@@ -15,14 +16,14 @@
     --radius-lg: 24px;
     --radius-md: 18px;
     --radius-sm: 12px;
-    --font-ui: "Segoe UI Variable", "Trebuchet MS", "Verdana", sans-serif;
+    --font-ui: 'Be Vietnam Pro', sans-serif;
 }
 
 * {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
-    font-family: var(--font-ui);
+    font-family: var(--font-ui); /* Áp dụng font cho toàn web */
 }
 
 body {
