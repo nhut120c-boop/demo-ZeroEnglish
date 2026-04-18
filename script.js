@@ -456,30 +456,18 @@ function setFlashcardVisibility(hasWord) {
             refs.saveWordBtn.textContent = "Lưu thuật ngữ";
             return;
         }
-
-        // Đổi chữ sang phong cách học thuật
         refs.saveWordBtn.textContent = isSavedWord(currentWord) ? "Hủy lưu thuật ngữ" : "Lưu thuật ngữ";
     }
 
     function resetFlashcardFlip() {
+        // Trả thẻ về mặt trước mà không gây khựng
         refs.flashcard.classList.remove("is-flipped");
-        refs.flashcard.classList.remove("is-animating");
-        state.flashcardInteraction.isAnimating = false;
     }
 
     function toggleFlashcard() {
-        if (!getCurrentWord() || state.flashcardInteraction.isAnimating) {
-            return;
-        }
-
-        state.flashcardInteraction.isAnimating = true;
-        refs.flashcard.classList.add("is-animating");
+        if (!getCurrentWord()) return;
+        // Bật/tắt class lật - CSS sẽ lo phần mượt mà
         refs.flashcard.classList.toggle("is-flipped");
-
-        window.setTimeout(() => {
-            refs.flashcard.classList.remove("is-animating");
-            state.flashcardInteraction.isAnimating = false;
-        }, 420);
     }
 
     function showCard() {
@@ -525,10 +513,7 @@ function setFlashcardVisibility(hasWord) {
     }
 
     function loadTopic(topicName) {
-        if (!state.appData[topicName]) {
-            return;
-        }
-
+        if (!state.appData[topicName]) return;
         state.currentTopic = topicName;
         state.currentIndex = 0;
         resetFlashcardFlip();
@@ -541,10 +526,7 @@ function setFlashcardVisibility(hasWord) {
     function stepCard(delta) {
         const wordList = state.appData[state.currentTopic] || [];
         const nextIndex = state.currentIndex + delta;
-
-        if (nextIndex < 0 || nextIndex >= wordList.length) {
-            return;
-        }
+        if (nextIndex < 0 || nextIndex >= wordList.length) return;
 
         state.currentIndex = nextIndex;
         resetFlashcardFlip();
@@ -564,7 +546,7 @@ function setFlashcardVisibility(hasWord) {
             return;
         }
 
-        setBusy(refs.generateBtn, true, "Đang khởi tạo dữ liệu...");
+        setBusy(refs.generateBtn, true, "Đang khởi tạo...");
         show(refs.loadingMsg);
 
         try {
@@ -584,9 +566,7 @@ function setFlashcardVisibility(hasWord) {
 
     async function handleExplainGrammar() {
         const currentWord = getCurrentWord();
-        if (!currentWord) {
-            return;
-        }
+        if (!currentWord) return;
 
         refs.explanationText.textContent = "Trợ lý AI đang phân tích cấu trúc ngữ pháp...";
         show(refs.explanationBox);
@@ -601,7 +581,6 @@ function setFlashcardVisibility(hasWord) {
 
     function renderSavedWords() {
         clearNode(refs.savedWordsGrid);
-
         if (!state.savedWordsList.length) {
             refs.savedWordsGrid.appendChild(createElement("p", "", "Sổ tay thuật ngữ hiện đang trống."));
             return;
@@ -625,79 +604,62 @@ function setFlashcardVisibility(hasWord) {
     }
 
     function initFlashcards() {
-        // 1. Lật thẻ chỉ bằng 1 thao tác chạm/click duy nhất
-        refs.flashcard.addEventListener("click", (event) => {
-            event.preventDefault();
+        // Dùng onclick để đảm bảo không bị chồng chéo sự kiện
+        refs.flashcard.onclick = (e) => {
+            e.preventDefault();
             toggleFlashcard();
-        });
+        };
 
-        // 2. Giữ nguyên lật thẻ bằng phím Enter/Space cho PC
-        refs.flashcard.addEventListener("keydown", (event) => {
-            if (event.key !== "Enter" && event.key !== " ") {
-                return;
+        refs.flashcard.onkeydown = (e) => {
+            if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                toggleFlashcard();
             }
-            event.preventDefault();
-            toggleFlashcard();
-        });
+        };
 
-        // 3. Các nút điều khiển giữ nguyên
-        refs.prevBtn.addEventListener("click", () => stepCard(-1));
-        refs.nextBtn.addEventListener("click", () => stepCard(1));
-        refs.generateBtn.addEventListener("click", handleTopicGeneration);
-        refs.explainGrammarBtn.addEventListener("click", handleExplainGrammar);
+        refs.prevBtn.onclick = () => stepCard(-1);
+        refs.nextBtn.onclick = () => stepCard(1);
+        refs.generateBtn.onclick = handleTopicGeneration;
+        refs.explainGrammarBtn.onclick = handleExplainGrammar;
         
-        refs.saveWordBtn.addEventListener("click", () => {
+        refs.saveWordBtn.onclick = () => {
             const currentWord = getCurrentWord();
-            if (!currentWord) {
-                return;
-            }
+            if (!currentWord) return;
             toggleSavedWord(currentWord);
             updateSaveButton();
             renderSavedWords();
-        });
+        };
 
-        refs.topicInput.addEventListener("keydown", (event) => {
-            if (event.key === "Enter" && !refs.generateBtn.disabled) {
+        refs.topicInput.onkeydown = (e) => {
+            if (e.key === "Enter" && !refs.generateBtn.disabled) {
                 handleTopicGeneration();
             }
-        });
+        };
 
-        refs.savedWordsGrid.addEventListener("click", (event) => {
-            const target = event.target.closest("[data-remove-saved-index]");
-            if (!target) {
-                return;
-            }
+        refs.savedWordsGrid.onclick = (e) => {
+            const target = e.target.closest("[data-remove-saved-index]");
+            if (!target) return;
             const index = Number(target.dataset.removeSavedIndex);
-            if (Number.isNaN(index)) {
-                return;
-            }
+            if (Number.isNaN(index)) return;
             state.savedWordsList.splice(index, 1);
             persistSavedWords();
             renderSavedWords();
             updateSaveButton();
-        });
+        };
 
-        refs.clearSavedBtn.addEventListener("click", () => {
-            if (!state.savedWordsList.length) {
-                return;
-            }
-            if (!window.confirm("Bạn muốn xóa toàn bộ từ đã lưu chứ?")) {
-                return;
-            }
+        refs.clearSavedBtn.onclick = () => {
+            if (!state.savedWordsList.length) return;
+            if (!window.confirm("Xác nhận làm sạch toàn bộ Sổ tay thuật ngữ?")) return;
             state.savedWordsList = [];
             persistSavedWords();
             renderSavedWords();
             updateSaveButton();
-        });
+        };
 
         renderTopics();
         renderSavedWords();
         const topics = Object.keys(state.appData);
-        if (topics.length) {
-            loadTopic(topics[0]);
-        } else {
-            showCard();
-        }
+        if (topics.length) loadTopic(topics[0]); else showCard();
     }
 
 // ---- src/70-reading.js ----
