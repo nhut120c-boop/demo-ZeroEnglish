@@ -81,33 +81,47 @@ function cleanText(value, { maxLength, allowEmpty = false } = {}) {
 }
 
 function extractJsonPayload(text) {
-  // Loại bỏ các đoạn Markdown ```json hoặc ``` nếu có
-  const cleanedText = text.replace(/```json/g, "").replace(/```/g, "").trim();
-  
-  const startChar = cleanedText.indexOf('{');
-  const startArray = cleanedText.indexOf('[');
-  let startIndex = -1;
+  for (let startIndex = 0; startIndex < text.length; startIndex += 1) {
+    const char = text[startIndex];
+    if (char !== "{" && char !== "[") {
+      continue;
+    }
 
-  if (startChar !== -1 && (startArray === -1 || startChar < startArray)) {
-    startIndex = startChar;
-  } else {
-    startIndex = startArray;
+    const stack = [char === "{" ? "}" : "]"];
+    let inString = false;
+    let escaped = false;
+
+    for (let endIndex = startIndex + 1; endIndex < text.length; endIndex += 1) {
+      const current = text[endIndex];
+
+      if (inString) {
+        if (escaped) {
+          escaped = false;
+        } else if (current === "\\") {
+          escaped = true;
+        } else if (current === "\"") {
+          inString = false;
+        }
+        continue;
+      }
+
+      if (current === "\"") {
+        inString = true;
+      } else if (current === "{" || current === "[") {
+        stack.push(current === "{" ? "}" : "]");
+      } else if (current === "}" || current === "]") {
+        if (!stack.length || current !== stack.at(-1)) {
+          break;
+        }
+        stack.pop();
+        if (!stack.length) {
+          return text.slice(startIndex, endIndex + 1);
+        }
+      }
+    }
   }
 
-  if (startIndex === -1) {
-    throw new Error("AI không trả về JSON hợp lệ (Thiếu dấu ngoặc).");
-  }
-
-  // Tìm dấu ngoặc đóng cuối cùng tương ứng
-  const lastBrace = cleanedText.lastIndexOf('}');
-  const lastBracket = cleanedText.lastIndexOf(']');
-  const endIndex = Math.max(lastBrace, lastBracket);
-
-  if (endIndex === -1 || endIndex < startIndex) {
-    throw new Error("AI không trả về JSON hợp lệ (JSON bị cắt cụt).");
-  }
-
-  return cleanedText.slice(startIndex, endIndex + 1);
+  throw new Error("AI không trả về JSON hợp lệ.");
 }
 
 function normalizeWordEntry(item) {
@@ -314,29 +328,23 @@ async function handleAdminStatus(request) {
 async function handleTopic(body) {
   const topic = cleanText(body.topic, { maxLength: 80 });
   const rawData = await groqJson(
-    "You are a strict JSON generator. Output ONLY raw JSON. No markdown, no conversational text, no explanations.",
-    `Generate a JSON array of 16 English words for topic: "${topic}". Format: [{"en":"word","vi":"nghĩa","pro":"/phiên âm/","ex":"ví dụ"}].`,
-    0.1 // Giảm nhiệt độ xuống mức tối thiểu để tránh AI sáng tạo bậy
+    "You generate safe JSON for a Vietnamese English-learning app. Never return markdown, code fences, HTML, or explanations.",
+    `Tạo 16 từ tiếng Anh theo chủ đề "${topic}". Trả về duy nhất một JSON array dạng: [{"en":"word","vi":"nghĩa tiếng Việt","pro":"/phiên âm/","ex":"Ví dụ ngắn"}].`,
+    0.45,
   );
 
   if (!Array.isArray(rawData)) {
-    throw new Error("AI trả về sai cấu trúc danh sách.");
+    throw new Error("AI không trả về danh sách từ.");
   }
 
-  const words = rawData.map(item => {
-    try {
-      return normalizeWordEntry(item);
-    } catch (e) {
-      return null;
-    }
-  }).filter(Boolean);
-
-  if (words.length < 5) {
-    throw new Error("Dữ liệu AI không đủ chất lượng, đại ca bấm lại nhé!");
+  const words = rawData.slice(0, 20).map(normalizeWordEntry);
+  if (words.length < 6) {
+    throw new Error("AI chưa tạo đủ bộ từ hợp lệ.");
   }
 
   return jsonResponse({ topic, words });
 }
+
 async function handleExplain(body) {
   const sentence = cleanText(body.sentence, { maxLength: 240 });
   const rawData = await groqJson(

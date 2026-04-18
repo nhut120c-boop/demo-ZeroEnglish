@@ -18,21 +18,19 @@ function setFlashcardVisibility(hasWord) {
     }
 
     function resetFlashcardFlip() {
-        // 1. Dùng setProperty kèm '!important' để bóp nghẹt hoàn toàn hiệu ứng CSS
-        refs.flashcard.style.setProperty('transition', 'none', 'important');
-        
-        // 2. Gỡ class lật, đưa thẻ về mặt trước ngay trong chớp mắt
+        // Tắt hiệu ứng chuyển cảnh để trả về mặt trước ngay lập tức
+        refs.flashcard.style.transition = 'none';
         refs.flashcard.classList.remove("is-flipped");
         
-        // 3. Ép trình duyệt chốt ngay trạng thái không hiệu ứng (Force reflow)
+        // Ép trình duyệt cập nhật lại trạng thái (force reflow)
         void refs.flashcard.offsetHeight;
         
-        // 4. Cho thời gian chờ dài hơn hẳn (100ms) để chữ mới nạp xong xuôi
-        // rồi mới trả lại hiệu ứng xoay để click vào thẻ vẫn lật mượt mà
+        // Khôi phục lại hiệu ứng xoay cho lần click lật thẻ sau đó
         setTimeout(() => {
             refs.flashcard.style.transition = '';
-        }, 100);
+        }, 10);
     }
+
     function stepCard(delta) {
         const wordList = state.appData[state.currentTopic] || [];
         const nextIndex = state.currentIndex + delta;
@@ -56,26 +54,25 @@ function setFlashcardVisibility(hasWord) {
         refs.flashcard.classList.toggle("is-flipped");
     }
 
-function showCard() {
-    const wordList = state.appData[state.currentTopic] || [];
-    const item = wordList[state.currentIndex];
-    if (!item) return;
+    function showCard() {
+        const currentWord = getCurrentWord();
+        if (!currentWord) {
+            refs.currentTopicTitle.textContent = "Vui lòng chọn một chủ đề học thuật";
+            refs.progressText.textContent = "0 / 0";
+            setFlashcardVisibility(false);
+            return;
+        }
 
-    if (state.currentLanguage === 'chinese') {
-        // Nạp chữ Hán vào mặt trước
-        refs.wordFront.textContent = item.zh; 
-        // Nạp Pinyin và Nghĩa vào mặt sau
-        refs.wordBack.innerHTML = `
-            <div class="pinyin">${item.pro}</div>
-            <div class="meaning">${item.vi}</div>
-            <div class="example">${item.ex}</div>
-        `;
-    } else {
-        // Tiếng Anh làm tương tự
-        refs.wordFront.textContent = item.en;
-        refs.wordBack.textContent = item.vi;
+        const wordList = state.appData[state.currentTopic] || [];
+        refs.currentTopicTitle.textContent = state.currentTopic;
+        refs.progressText.textContent = `${state.currentIndex + 1} / ${wordList.length}`;
+        refs.wordEn.textContent = currentWord.en;
+        refs.wordPro.textContent = currentWord.pro || "/.../";
+        refs.wordVi.textContent = currentWord.vi;
+        refs.wordEx.textContent = currentWord.ex;
+        updateSaveButton();
+        setFlashcardVisibility(true);
     }
-}
 
     function renderTopics() {
         clearNode(refs.topicList);
