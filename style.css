@@ -117,11 +117,12 @@ body {
     gap: 24px;
 }
 
-/* --- FLASHCARD: CỨNG CÁP & MƯỢT --- */
+/* --- FLASHCARD: BẢN SIÊU CÁCH NHIỆT (FIX LỖI HIỆN NGƯỢC) --- */
 .flashcard-container {
     width: min(100%, 460px);
     height: 280px;
     perspective: 2000px;
+    margin: 0 auto;
 }
 
 .flashcard {
@@ -134,15 +135,23 @@ body {
     cursor: pointer;
 }
 
-/* KHÓA HOVER TỰ LẬT */
-.flashcard:hover { transform: none !important; }
-.flashcard.is-flipped { transform: rotateY(180deg) !important; }
+/* KHÓA HOVER: Tuyệt đối không cho di chuột làm thay đổi vị trí thẻ */
+.flashcard:hover { 
+    transform: none !important; 
+}
+
+/* Lật thẻ khi Click */
+.flashcard.is-flipped { 
+    transform: rotateY(180deg) !important; 
+}
 
 .card-face {
     position: absolute;
     inset: 0;
-    backface-visibility: hidden;
-    -webkit-backface-visibility: hidden;
+    /* KHÓA CHẾT MẶT SAU: Không cho phép nhìn xuyên thấu */
+    backface-visibility: hidden !important;
+    -webkit-backface-visibility: hidden !important;
+    
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -153,13 +162,23 @@ body {
     box-shadow: 0 10px 25px rgba(0,0,0,0.05);
 }
 
-.card-front { background: #fff; z-index: 2; transform: rotateY(0deg); }
-.card-back { background: var(--blue); color: #fff; transform: rotateY(180deg); }
+.card-front { 
+    background: #ffffff; 
+    z-index: 2; 
+    /* Đẩy mặt trước lên 1px trong không gian 3D */
+    transform: rotateY(0deg) translateZ(1px); 
+}
+
+.card-back { 
+    background: var(--blue); 
+    color: #fff; 
+    /* Đẩy mặt sau lùi về 1px để không bị dính vào mặt trước */
+    transform: rotateY(180deg) translateZ(1px); 
+}
 
 .word-main { font-size: 48px; font-weight: 900; letter-spacing: -2px; }
 .word-pro { color: var(--text-soft); font-size: 18px; margin-top: 5px; }
 .card-back .example { font-style: italic; text-align: center; line-height: 1.6; font-size: 18px; }
-
 /* --- BUTTONS: ĐỒNG BỘ & KHÔNG RỚT DÒNG --- */
 button {
     border: none;
