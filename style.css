@@ -946,3 +946,94 @@ button {
     white-space: nowrap;
     flex-shrink: 0;
 }
+/* ─── Language Switcher ──────────────────────────────── */
+.lang-switcher {
+    display: flex;
+    gap: 0.5rem;
+    padding: 0.75rem 1.25rem 0;
+    background: var(--bg-primary, #0f1117);
+}
+.lang-btn {
+    padding: 0.5rem 1.5rem;
+    border: 2px solid var(--border-color, #2a2d3a);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--text-secondary, #8b8fa8);
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.lang-btn.active {
+    background: var(--accent-primary, #4f8ef7);
+    border-color: var(--accent-primary, #4f8ef7);
+    color: #fff;
+}
+.lang-btn:hover:not(.active) {
+    border-color: var(--accent-primary, #4f8ef7);
+    color: var(--accent-primary, #4f8ef7);
+}
+
+/* ─── Chinese text larger font ───────────────────────── */
+.cn-text, .cn-text button {
+    font-size: 1.1rem;
+    letter-spacing: 0.05em;
+    line-height: 1.9;
+}
+
+/* ─── Matching header row ────────────────────────────── */
+.matching-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+
+/* ─── Transcript box ─────────────────────────────────── */
+.transcript-box {
+    background: var(--bg-secondary, #1a1d2a);
+    border: 1px solid var(--border-color, #2a2d3a);
+    border-radius: 10px;
+    padding: 1rem 1.25rem;
+    margin-top: 1rem;
+    line-height: 1.8;
+    color: var(--text-primary, #e8eaf6);
+}
+
+/* ─── Chinese saved word card ────────────────────────── */
+.saved-word-card .saved-zh {
+    display: block;
+    font-size: 1.8rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    color: var(--accent-primary, #4f8ef7);
+    margin-bottom: 0.2rem;
+}
+.saved-word-card .saved-pro {
+    display: block;
+    font-size: 0.9rem;
+    color: var(--text-muted, #5a5e7a);
+    margin-bottom: 0.3rem;
+}
+.saved-word-card .saved-vi {
+    display: block;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-secondary, #8b8fa8);
+    margin-bottom: 0.3rem;
+}
+.saved-word-card .saved-ex {
+    display: block;
+    font-size: 0.82rem;
+    color: var(--text-muted, #5a5e7a);
+    line-height: 1.6;
+}
+
+/* ─── Status note ────────────────────────────────────── */
+#readingLoadingMsg, #cnReadingLoadingMsg,
+#listenLoadingMsg, #cnListenLoadingMsg,
+#matchingLoadingMsg, #cnMatchingLoadingMsg,
+#grammarLoadingMsg, #cnLoadingMsg, #loadingMsg {
+    text-align: center;
+    padding: 0.5rem;
+}
