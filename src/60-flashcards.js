@@ -56,25 +56,26 @@ function setFlashcardVisibility(hasWord) {
         refs.flashcard.classList.toggle("is-flipped");
     }
 
-    function showCard() {
-        const currentWord = getCurrentWord();
-        if (!currentWord) {
-            refs.currentTopicTitle.textContent = "Vui lòng chọn một chủ đề học thuật";
-            refs.progressText.textContent = "0 / 0";
-            setFlashcardVisibility(false);
-            return;
-        }
+function showCard() {
+    const wordList = state.appData[state.currentTopic] || [];
+    const item = wordList[state.currentIndex];
+    if (!item) return;
 
-        const wordList = state.appData[state.currentTopic] || [];
-        refs.currentTopicTitle.textContent = state.currentTopic;
-        refs.progressText.textContent = `${state.currentIndex + 1} / ${wordList.length}`;
-        refs.wordEn.textContent = currentWord.en;
-        refs.wordPro.textContent = currentWord.pro || "/.../";
-        refs.wordVi.textContent = currentWord.vi;
-        refs.wordEx.textContent = currentWord.ex;
-        updateSaveButton();
-        setFlashcardVisibility(true);
+    if (state.currentLanguage === 'chinese') {
+        // Nạp chữ Hán vào mặt trước
+        refs.wordFront.textContent = item.zh; 
+        // Nạp Pinyin và Nghĩa vào mặt sau
+        refs.wordBack.innerHTML = `
+            <div class="pinyin">${item.pro}</div>
+            <div class="meaning">${item.vi}</div>
+            <div class="example">${item.ex}</div>
+        `;
+    } else {
+        // Tiếng Anh làm tương tự
+        refs.wordFront.textContent = item.en;
+        refs.wordBack.textContent = item.vi;
     }
+}
 
     function renderTopics() {
         clearNode(refs.topicList);
