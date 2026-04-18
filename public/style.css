@@ -1,20 +1,17 @@
-/* --- HỆ THỐNG BIẾN SỐ CHUẨN EDUTECH --- */
+/* --- BIẾN SỐ HỆ THỐNG --- */
 :root {
     --bg-main: #eff4f8;
-    --bg-card: rgba(255, 255, 255, 0.9);
-    --bg-accent: #f8fbff;
-    --border-soft: rgba(22, 69, 102, 0.12);
+    --bg-card: #ffffff;
+    --border-soft: rgba(22, 69, 102, 0.1);
     --text-main: #16344b;
     --text-soft: #597286;
     --blue: #0d6efd;
     --blue-deep: #0a4fb5;
-    --green: #1e8f62;
     --amber: #d48a12;
+    --green: #1e8f62;
     --red: #d94a43;
-    --shadow-lg: 0 20px 40px rgba(16, 37, 55, 0.12);
-    --shadow-sm: 0 8px 20px rgba(16, 37, 55, 0.06);
+    --shadow-lg: 0 15px 35px rgba(16, 37, 55, 0.1);
     --radius-lg: 24px;
-    --radius-md: 18px;
     --font-ui: "Segoe UI Variable", "Trebuchet MS", sans-serif;
 }
 
@@ -23,76 +20,76 @@
 body {
     min-height: 100vh;
     padding: 24px;
-    color: var(--text-main);
     background: linear-gradient(160deg, #f0f4f8 0%, #ffffff 100%);
+    color: var(--text-main);
 }
 
-/* --- NÚT BẤM & INPUT: KHÓA RỚT DÒNG --- */
-button {
-    border: none;
-    border-radius: 999px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    padding: 14px 28px;
-    white-space: nowrap; /* KHÔNG CHO CHỮ RỚT DÒNG */
-    font-weight: 700;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-}
+.hidden { display: none !important; }
 
-button:hover:not(:disabled) { transform: translateY(-2px); box-shadow: var(--shadow-sm); }
-button:disabled { opacity: 0.5; cursor: not-allowed; }
-
-input, select {
-    width: 100%;
-    border: 1px solid var(--border-soft);
-    border-radius: 14px;
-    padding: 14px;
-    outline: none;
-    background: #fff;
-}
-
-/* --- GIAO DIỆN CHÍNH --- */
+/* --- HEADER & TABS --- */
 .app-shell { max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
 
 .navbar {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 24px 32px;
+    padding: 24px 30px;
     border-radius: var(--radius-lg);
     background: #fff;
     box-shadow: var(--shadow-lg);
+    border: 1px solid var(--border-soft);
 }
 
 .logo { font-size: 32px; font-weight: 900; color: #103451; }
+.brand-copy { color: var(--text-soft); font-size: 14px; margin-top: 5px; }
 
 .tabs {
     display: flex;
     gap: 8px;
-    padding: 8px;
-    background: rgba(255,255,255,0.7);
+    padding: 10px;
+    background: #fff;
     border-radius: 999px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.05);
     border: 1px solid var(--border-soft);
+    overflow-x: auto;
 }
 
-.tab-btn { background: transparent; color: var(--text-soft); padding: 10px 20px; }
+.tab-btn {
+    padding: 10px 22px;
+    background: transparent;
+    color: var(--text-soft);
+    font-weight: 700;
+    white-space: nowrap;
+    border-radius: 999px;
+    transition: all 0.2s;
+}
+
 .tab-btn.active { background: var(--blue); color: #fff; }
 
+/* --- CONTAINER CHÍNH: KHÓA CHẶT LAYOUT --- */
 .app-container {
     background: #fff;
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-lg);
     min-height: 650px;
-    display: flex;
-    overflow: hidden;
+    position: relative;
+    border: 1px solid var(--border-soft);
 }
 
-.view-section { display: flex; flex: 1; }
-.flex-col { flex-direction: column; padding: 40px; gap: 24px; }
+/* Các section sẽ xếp chồng lên nhau, chỉ cái nào không có .hidden mới hiện */
+.view-section {
+    display: none; 
+    min-height: 650px;
+}
 
-/* --- SIDEBAR --- */
+/* Khi active (không có class hidden) */
+.view-section:not(.hidden) {
+    display: flex;
+}
+
+.flex-col { flex-direction: column; padding: 40px; gap: 25px; }
+
+/* --- SIDEBAR & MAIN CONTENT (Flashcard View) --- */
 .sidebar {
     width: 320px;
     padding: 30px 20px;
@@ -103,28 +100,28 @@ input, select {
     gap: 20px;
 }
 
-.topic-list { list-style: none; display: flex; flex-direction: column; gap: 10px; overflow-y: auto; }
-.topic-item { 
-    width: 100%; text-align: left; padding: 14px; border-radius: 14px; 
-    background: #fff; border: 1px solid var(--border-soft);
+.topic-list { list-style: none; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; }
+.topic-item {
+    width: 100%; text-align: left; padding: 12px 16px; border-radius: 12px;
+    background: #fff; border: 1px solid var(--border-soft); font-weight: 600;
 }
-.topic-item.active { border-color: var(--blue); background: rgba(13, 110, 253, 0.05); }
+.topic-item.active { border-color: var(--blue); background: rgba(13, 110, 253, 0.05); color: var(--blue); }
 
-/* --- HỆ THỐNG FLASHCARD: KHÓA CỨNG HOVER --- */
 .main-content {
     flex: 1;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 25px;
     padding: 40px;
+    gap: 24px;
 }
 
+/* --- FLASHCARD: CỨNG CÁP & MƯỢT --- */
 .flashcard-container {
-    width: min(100%, 480px);
-    height: 300px;
-    perspective: 2000px; /* Tạo độ sâu 3D */
+    width: min(100%, 460px);
+    height: 280px;
+    perspective: 2000px;
 }
 
 .flashcard {
@@ -137,10 +134,8 @@ input, select {
     cursor: pointer;
 }
 
-/* TUYỆT ĐỐI KHÔNG LẬT KHI RÊ CHUỘT */
+/* KHÓA HOVER TỰ LẬT */
 .flashcard:hover { transform: none !important; }
-
-/* CHỈ LẬT KHI CÓ CLASS IS-FLIPPED */
 .flashcard.is-flipped { transform: rotateY(180deg) !important; }
 
 .card-face {
@@ -155,19 +150,33 @@ input, select {
     padding: 30px;
     border-radius: 30px;
     border: 1px solid var(--border-soft);
-    box-shadow: var(--shadow-sm);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.05);
 }
 
 .card-front { background: #fff; z-index: 2; transform: rotateY(0deg); }
 .card-back { background: var(--blue); color: #fff; transform: rotateY(180deg); }
 
-.word-main { font-size: 44px; font-weight: 900; }
-.word-pro { color: var(--text-soft); margin-top: 5px; }
-.card-back .example { font-style: italic; font-size: 18px; text-align: center; line-height: 1.5; }
+.word-main { font-size: 48px; font-weight: 900; letter-spacing: -2px; }
+.word-pro { color: var(--text-soft); font-size: 18px; margin-top: 5px; }
+.card-back .example { font-style: italic; text-align: center; line-height: 1.6; font-size: 18px; }
 
-/* --- TIỆN ÍCH KHÁC --- */
-.section-actions { display: flex; gap: 12px; min-width: 450px; } /* Đủ chỗ cho nút Khởi tạo */
-.content-box { padding: 30px; background: #fff; border-radius: 20px; border: 1px solid var(--border-soft); }
+/* --- BUTTONS: ĐỒNG BỘ & KHÔNG RỚT DÒNG --- */
+button {
+    border: none;
+    border-radius: 999px;
+    cursor: pointer;
+    padding: 14px 28px;
+    font-weight: 700;
+    transition: all 0.2s;
+    white-space: nowrap; /* QUAN TRỌNG: Chống rớt chữ */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+button:hover:not(:disabled) { transform: translateY(-2px); filter: brightness(1.1); }
+button:active { transform: translateY(0); }
 
 .btn-primary { background: var(--blue); color: #fff; }
 .btn-warning { background: var(--amber); color: #fff; }
@@ -175,9 +184,18 @@ input, select {
 .btn-danger { background: var(--red); color: #fff; }
 .btn-secondary { background: #eee; color: var(--text-main); }
 
+/* --- CẤU TRÚC CHI TIẾT CÁC VIEW --- */
+.section-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; }
+.section-actions { display: flex; gap: 12px; min-width: 460px; } /* Đủ chỗ cho select và button */
+
+.content-box { padding: 30px; background: #fff; border-radius: 20px; border: 1px solid var(--border-soft); }
+
+.action-buttons, .controls { display: flex; gap: 12px; width: min(100%, 460px); }
+.action-buttons button, .controls button { flex: 1; }
+
 /* --- RESPONSIVE --- */
 @media (max-width: 900px) {
-    .view-section { flex-direction: column; }
+    .view-section:not(.hidden) { flex-direction: column; }
     .sidebar { width: 100%; border-right: none; border-bottom: 1px solid var(--border-soft); }
     .section-actions { min-width: 100%; flex-direction: column; }
 }
