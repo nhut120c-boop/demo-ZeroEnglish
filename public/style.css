@@ -46,6 +46,10 @@ button {
     border-radius: 999px;
     cursor: pointer;
     transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+    /* FIX NÚT BẤM BỊ ÉP CHỮ */
+    white-space: nowrap; 
+    flex-shrink: 0;      
+    padding: 14px 24px;  
 }
 
 button:hover:not(:disabled) {
@@ -265,7 +269,7 @@ select:focus {
 }
 
 /* ==================================================================== */
-/* KHU VỰC ĐÃ FIX: CHỈ LẬT KHI CLICK & CHỐNG XUYÊN THẤU */
+/* FLASHCARD BẤT TỬ (ĐÃ FIX CHỈ LẬT KHI CLICK & CHỐNG XUYÊN THẤU) */
 /* ==================================================================== */
 .flashcard-container {
     width: min(100%, 460px);
@@ -288,15 +292,13 @@ select:focus {
     -webkit-tap-highlight-color: transparent;
     transform-style: preserve-3d;
     transition: transform 0.55s ease;
-    cursor: pointer; /* Thêm con trỏ chuột cho dễ nhận biết */
+    cursor: pointer;
 }
 
-/* 1. KHÓA CHẶT HOVER: Cấm thẻ lật khi chỉ mới di chuột qua */
 .flashcard:hover {
     transform: none !important;
 }
 
-/* Chỉ lật khi Javascript add class is-flipped (Tức là khi đại ca Click) */
 .flashcard.is-flipped {
     transform: rotateY(180deg) !important;
 }
@@ -315,7 +317,6 @@ select:focus {
     gap: 12px;
     padding: 28px;
     border-radius: 28px;
-    /* 2. FIX XUYÊN THẤU/HIỆN NGƯỢC: Khóa mặt sau hiển thị trên Cốc Cốc */
     backface-visibility: hidden !important;
     -webkit-backface-visibility: hidden !important;
     transform: translateZ(0); 
@@ -326,7 +327,7 @@ select:focus {
 
 .card-front {
     background: linear-gradient(180deg, #ffffff, #f9fcff);
-    z-index: 2; /* 3. Đảm bảo mặt trước đè lên mặt sau khi chưa lật */
+    z-index: 2;
     transform: rotateY(0deg);
 }
 
@@ -335,6 +336,7 @@ select:focus {
     color: #fff;
     transform: rotateY(180deg);
 }
+
 /* ==================================================================== */
 
 .word-main {
@@ -410,10 +412,12 @@ select:focus {
     gap: 16px;
 }
 
+/* NỚI RỘNG CHO NÚT BẤM VÀ SELECT ĐỠ BỊ ÉP */
 .section-actions {
     display: flex;
     gap: 12px;
-    min-width: min(100%, 340px);
+    width: 100%;
+    max-width: 500px; 
 }
 
 .content-box {
@@ -501,9 +505,23 @@ select:focus {
     line-height: 1.7;
 }
 
+/* ==================================================================== */
+/* CHAT GIA SƯ AI PREMIUM ĐÃ NÂNG CẤP */
+/* ==================================================================== */
+.chat-wrapper {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+    max-width: 900px;
+    margin: 0 auto;
+    gap: 16px;
+}
+
 .chat-header {
     padding-bottom: 16px;
     border-bottom: 1px solid rgba(13, 110, 253, 0.12);
+    text-align: center;
 }
 
 .chat-box {
@@ -513,48 +531,41 @@ select:focus {
     overflow-y: auto;
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    gap: 16px;
     border-radius: 24px;
     background: rgba(255, 255, 255, 0.9);
     border: 1px solid rgba(13, 110, 253, 0.08);
 }
 
-.message {
-    display: flex;
-    max-width: 82%;
-}
-
-.ai-message {
-    align-self: flex-start;
-}
-
-.user-message {
-    align-self: flex-end;
-}
+.message { display: flex; max-width: 85%; }
+.ai-message { align-self: flex-start; }
+.user-message { align-self: flex-end; }
 
 .msg-bubble {
-    padding: 14px 16px;
-    border-radius: 18px;
-    line-height: 1.65;
-    white-space: pre-wrap;
+    padding: 16px 20px;
+    border-radius: 20px;
+    line-height: 1.6;
+    font-size: 15.5px;
     box-shadow: var(--shadow-sm);
+    white-space: pre-wrap;
 }
 
-.ai-message .msg-bubble {
-    background: #fff;
-    border-bottom-left-radius: 6px;
-}
-
-.user-message .msg-bubble {
-    background: linear-gradient(135deg, var(--blue), #2a8cff);
-    color: #fff;
-    border-bottom-right-radius: 6px;
-}
+.ai-message .msg-bubble { background: #fff; border: 1px solid var(--border-soft); border-bottom-left-radius: 6px; }
+.user-message .msg-bubble { background: linear-gradient(135deg, var(--blue), #2a8cff); color: #fff; border-bottom-right-radius: 6px; }
 
 .chat-input-area {
     display: flex;
     gap: 12px;
+    background: #fff;
+    padding: 12px;
+    border-radius: 999px;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border-soft);
 }
+
+.chat-input-area input { border: none; background: transparent; box-shadow: none; }
+.chat-input-area input:focus { box-shadow: none; border: none; }
+/* ==================================================================== */
 
 .typing-indicator {
     display: inline-flex;
@@ -780,6 +791,40 @@ select:focus {
     color: #fff;
 }
 
+/* ==================================================================== */
+/* EMPTY STATE - TRẠNG THÁI RỖNG ĐỂ TRÁNH TRỐNG WEB */
+/* ==================================================================== */
+.empty-state-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 60px 20px;
+    background: rgba(13, 110, 253, 0.03);
+    border: 2px dashed rgba(13, 110, 253, 0.15);
+    border-radius: 24px;
+    margin-top: 20px;
+    color: var(--text-soft);
+    animation: fadeIn 0.5s ease;
+}
+
+.empty-state-box h3 {
+    color: var(--blue-deep);
+    font-size: 20px;
+    margin-bottom: 10px;
+}
+
+.empty-state-box p {
+    max-width: 400px;
+    line-height: 1.6;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
 @media (max-width: 960px) {
     body {
         padding: 14px;
@@ -844,4 +889,48 @@ select:focus {
     .reading-text {
         font-size: 18px;
     }
+}
+/* --- TRẠNG THÁI RỖNG (EMPTY STATE) --- */
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 60px 20px;
+    background: rgba(13, 110, 253, 0.02);
+    border: 2px dashed rgba(13, 110, 253, 0.12);
+    border-radius: 24px;
+    margin-top: 20px;
+    color: var(--text-soft);
+    animation: fadeIn 0.4s ease-out;
+}
+
+.empty-state h3 {
+    color: var(--blue-deep);
+    font-size: 22px;
+    margin-bottom: 12px;
+}
+
+.empty-state p {
+    max-width: 480px;
+    line-height: 1.6;
+    margin-bottom: 20px;
+}
+
+.empty-state-icon {
+    font-size: 48px;
+    margin-bottom: 15px;
+    opacity: 0.8;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Tinh chỉnh nút bấm trong phần Chat để không bị ép chữ */
+button {
+    white-space: nowrap;
+    flex-shrink: 0;
 }
