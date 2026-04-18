@@ -1,4 +1,4 @@
-import { timingSafeEqual, createHmac } from "crypto";
+
 
 const BRAND = "ZeroEnglish";
 
@@ -109,12 +109,20 @@ function jsonResponse(body, status = 200) {
 }
 
 function safeEqual(left, right) {
-  const leftBuffer = Buffer.from(String(left ?? ""), "utf8");
-  const rightBuffer = Buffer.from(String(right ?? ""), "utf8");
-  if (leftBuffer.length !== rightBuffer.length) {
+  const a = String(left ?? "");
+  const b = String(right ?? "");
+  
+  if (a.length !== b.length) {
     return false;
   }
-  return timingSafeEqual(leftBuffer, rightBuffer);
+
+  // Thuật toán so sánh không phụ thuộc vào thời gian (Constant time comparison)
+  let result = 0;
+  for (let i = 0; i < a.length; i++) {
+    result |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  }
+  
+  return result === 0;
 }
 
 function cleanText(value, { maxLength, allowEmpty = false } = {}) {
