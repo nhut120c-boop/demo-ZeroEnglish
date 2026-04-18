@@ -1,4 +1,4 @@
-    function setFlashcardVisibility(hasWord) {
+function setFlashcardVisibility(hasWord) {
         [refs.cardContainer, refs.actionButtons, refs.controls].forEach((element) => {
             if (hasWord) {
                 show(element);
@@ -11,11 +11,12 @@
     function updateSaveButton() {
         const currentWord = getCurrentWord();
         if (!currentWord) {
-            refs.saveWordBtn.textContent = "Lưu từ này";
+            refs.saveWordBtn.textContent = "Lưu thuật ngữ";
             return;
         }
 
-        refs.saveWordBtn.textContent = isSavedWord(currentWord) ? "Bỏ lưu từ này" : "Lưu từ này";
+        // Đổi chữ sang phong cách học thuật
+        refs.saveWordBtn.textContent = isSavedWord(currentWord) ? "Hủy lưu thuật ngữ" : "Lưu thuật ngữ";
     }
 
     function resetFlashcardFlip() {
@@ -42,7 +43,7 @@
     function showCard() {
         const currentWord = getCurrentWord();
         if (!currentWord) {
-            refs.currentTopicTitle.textContent = "Chọn một chủ đề để bắt đầu";
+            refs.currentTopicTitle.textContent = "Vui lòng chọn một chủ đề học thuật";
             refs.progressText.textContent = "0 / 0";
             setFlashcardVisibility(false);
             return;
@@ -64,7 +65,7 @@
         const topics = Object.keys(state.appData);
 
         if (!topics.length) {
-            refs.topicList.appendChild(createElement("li", "", "Chưa có chủ đề nào."));
+            refs.topicList.appendChild(createElement("li", "", "Hệ thống chưa có dữ liệu chủ đề."));
             return;
         }
 
@@ -113,15 +114,15 @@
     async function handleTopicGeneration() {
         const topic = refs.topicInput.value.trim();
         if (!topic) {
-            showError("Hãy nhập tên chủ đề trước.");
+            showError("Vui lòng nhập từ khóa chủ đề cần tạo.");
             return;
         }
         if (state.appData[topic]) {
-            showError("Chủ đề này đã tồn tại rồi.");
+            showError("Chủ đề này đã tồn tại trong hệ thống.");
             return;
         }
 
-        setBusy(refs.generateBtn, true, "Đang tạo...");
+        setBusy(refs.generateBtn, true, "Đang khởi tạo dữ liệu...");
         show(refs.loadingMsg);
 
         try {
@@ -134,7 +135,7 @@
         } catch (error) {
             showError(error.message);
         } finally {
-            setBusy(refs.generateBtn, false, "Đang tạo...");
+            setBusy(refs.generateBtn, false, "Khởi tạo chủ đề AI");
             hide(refs.loadingMsg);
         }
     }
@@ -145,7 +146,7 @@
             return;
         }
 
-        refs.explanationText.textContent = "Đang phân tích câu ví dụ...";
+        refs.explanationText.textContent = "Trợ lý AI đang phân tích cấu trúc ngữ pháp...";
         show(refs.explanationBox);
 
         try {
@@ -160,16 +161,16 @@
         clearNode(refs.savedWordsGrid);
 
         if (!state.savedWordsList.length) {
-            refs.savedWordsGrid.appendChild(createElement("p", "", "Chưa có từ nào được lưu."));
+            refs.savedWordsGrid.appendChild(createElement("p", "", "Sổ tay thuật ngữ hiện đang trống."));
             return;
         }
 
         state.savedWordsList.forEach((word, index) => {
             const card = createElement("article", "saved-card");
             const title = createElement("h3", "", word.en);
-            const meaning = createElement("p", "", `Nghĩa: ${word.vi}`);
-            const example = createElement("p", "", `Ví dụ: ${word.ex}`);
-            const removeButton = createElement("button", "btn-secondary remove-btn", "Xóa khỏi sổ tay");
+            const meaning = createElement("p", "", `Định nghĩa: ${word.vi}`);
+            const example = createElement("p", "", `Ngữ cảnh: ${word.ex}`);
+            const removeButton = createElement("button", "btn-secondary remove-btn", "Loại bỏ");
             removeButton.type = "button";
             removeButton.dataset.removeSavedIndex = String(index);
 
@@ -182,38 +183,10 @@
     }
 
     function initFlashcards() {
-        refs.flashcard.addEventListener("pointerdown", (event) => {
-            if (event.pointerType === "mouse" && event.button !== 0) {
-                return;
-            }
-
-            state.flashcardInteraction.pointerId = event.pointerId;
-            state.flashcardInteraction.startX = event.clientX;
-            state.flashcardInteraction.startY = event.clientY;
-            state.flashcardInteraction.startTime = Date.now();
-        });
-
-        refs.flashcard.addEventListener("pointerup", (event) => {
-            if (state.flashcardInteraction.pointerId !== event.pointerId) {
-                return;
-            }
-
-            const moveX = Math.abs(event.clientX - state.flashcardInteraction.startX);
-            const moveY = Math.abs(event.clientY - state.flashcardInteraction.startY);
-            const elapsed = Date.now() - state.flashcardInteraction.startTime;
-
-            state.flashcardInteraction.pointerId = null;
-
-            if (moveX > 12 || moveY > 12 || elapsed > 450) {
-                return;
-            }
-
+        // [ĐÃ ĐỘ LẠI]: Bỏ hết pointerdown, pointerup phức tạp. Thay bằng 1 event click cực mượt cho cả Touch và Chuột.
+        refs.flashcard.addEventListener("click", (event) => {
             event.preventDefault();
             toggleFlashcard();
-        });
-
-        refs.flashcard.addEventListener("pointercancel", () => {
-            state.flashcardInteraction.pointerId = null;
         });
 
         refs.flashcard.addEventListener("keydown", (event) => {
@@ -263,7 +236,7 @@
             if (!state.savedWordsList.length) {
                 return;
             }
-            if (!window.confirm("Bạn muốn xóa toàn bộ từ đã lưu chứ?")) {
+            if (!window.confirm("Xác nhận làm sạch toàn bộ dữ liệu trong Sổ tay thuật ngữ?")) {
                 return;
             }
             state.savedWordsList = [];
