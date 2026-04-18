@@ -327,34 +327,35 @@ async function handleAdminStatus(request) {
 
 async function handleTopic(body) {
   const topic = cleanText(body.topic, { maxLength: 80 });
-  
-  // 1. Giảm temperature xuống 0.2 để AI bớt "ngáo", tập trung vào cấu trúc
+
+  // 1. Giảm temperature xuống cực thấp (0.1) để AI không sáng tạo bậy bạ
+  // 2. Dặn dò cực gắt trong System Prompt
   const rawData = await groqJson(
-    "You are a vocabulary generator. Return ONLY a plain JSON array. No markdown, no fences, no preamble.",
-    `Tạo 16 từ tiếng Anh theo chủ đề "${topic}". Định dạng JSON: [{"en":"word","vi":"nghĩa","pro":"/phiên âm/","ex":"ví dụ"}].`,
-    0.2 
+    "You are a strict JSON generator. Output ONLY a valid JSON array. No talk, no markdown, no code blocks.",
+    `Generate exactly 16 English vocabulary items for the topic "${topic}". 
+    Format: [{"en":"word","vi":"nghĩa","pro":"/phiên âm/","ex":"ví dụ ngắn"}]. 
+    Ensure the JSON is minified and has no trailing commas.`,
+    0.1 
   );
 
-  // 2. Kiểm tra kỹ hơn dữ liệu trả về
+  // 3. Kiểm tra và làm sạch dữ liệu
   if (!rawData || !Array.isArray(rawData)) {
-    console.error("AI Payload Error:", rawData); // Log để đại ca dễ debug
-    throw new Error("AI không trả về danh sách từ hợp lệ. Thử lại phát nữa xem đại ca!");
+    throw new Error("AI trả về định dạng lạ, đại ca bấm lại phát nữa nhé!");
   }
 
-  // 3. Lọc bỏ những mục bị lỗi để không làm sập cả danh sách
+  // Lọc lấy những từ đủ cấu hình, tránh làm sập app nếu AI viết thiếu 1-2 từ
   const words = rawData
-    .slice(0, 20)
     .map(item => {
-        try {
-            return normalizeWordEntry(item);
-        } catch (e) {
-            return null; // Bỏ qua từ bị lỗi định dạng
-        }
+      try {
+        return normalizeWordEntry(item);
+      } catch (e) {
+        return null; 
+      }
     })
-    .filter(Boolean); // Chỉ giữ lại những từ chuẩn
+    .filter(Boolean);
 
-  if (words.length < 4) {
-    throw new Error("AI tạo bộ từ chưa đạt chuẩn số lượng. Đại ca bấm lại lần nữa nhé!");
+  if (words.length < 5) {
+    throw new Error("Bộ từ vựng bị lỗi cấu trúc. Đại ca thử lại nhé!");
   }
 
   return jsonResponse({ topic, words });
