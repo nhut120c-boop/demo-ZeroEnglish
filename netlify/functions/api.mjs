@@ -81,47 +81,33 @@ function cleanText(value, { maxLength, allowEmpty = false } = {}) {
 }
 
 function extractJsonPayload(text) {
-  for (let startIndex = 0; startIndex < text.length; startIndex += 1) {
-    const char = text[startIndex];
-    if (char !== "{" && char !== "[") {
-      continue;
-    }
+  // Loại bỏ các đoạn Markdown ```json hoặc ``` nếu có
+  const cleanedText = text.replace(/```json/g, "").replace(/```/g, "").trim();
+  
+  const startChar = cleanedText.indexOf('{');
+  const startArray = cleanedText.indexOf('[');
+  let startIndex = -1;
 
-    const stack = [char === "{" ? "}" : "]"];
-    let inString = false;
-    let escaped = false;
-
-    for (let endIndex = startIndex + 1; endIndex < text.length; endIndex += 1) {
-      const current = text[endIndex];
-
-      if (inString) {
-        if (escaped) {
-          escaped = false;
-        } else if (current === "\\") {
-          escaped = true;
-        } else if (current === "\"") {
-          inString = false;
-        }
-        continue;
-      }
-
-      if (current === "\"") {
-        inString = true;
-      } else if (current === "{" || current === "[") {
-        stack.push(current === "{" ? "}" : "]");
-      } else if (current === "}" || current === "]") {
-        if (!stack.length || current !== stack.at(-1)) {
-          break;
-        }
-        stack.pop();
-        if (!stack.length) {
-          return text.slice(startIndex, endIndex + 1);
-        }
-      }
-    }
+  if (startChar !== -1 && (startArray === -1 || startChar < startArray)) {
+    startIndex = startChar;
+  } else {
+    startIndex = startArray;
   }
 
-  throw new Error("AI không trả về JSON hợp lệ.");
+  if (startIndex === -1) {
+    throw new Error("AI không trả về JSON hợp lệ (Thiếu dấu ngoặc).");
+  }
+
+  // Tìm dấu ngoặc đóng cuối cùng tương ứng
+  const lastBrace = cleanedText.lastIndexOf('}');
+  const lastBracket = cleanedText.lastIndexOf(']');
+  const endIndex = Math.max(lastBrace, lastBracket);
+
+  if (endIndex === -1 || endIndex < startIndex) {
+    throw new Error("AI không trả về JSON hợp lệ (JSON bị cắt cụt).");
+  }
+
+  return cleanedText.slice(startIndex, endIndex + 1);
 }
 
 function normalizeWordEntry(item) {
@@ -327,40 +313,30 @@ async function handleAdminStatus(request) {
 
 async function handleTopic(body) {
   const topic = cleanText(body.topic, { maxLength: 80 });
-
-  // 1. Giảm temperature xuống cực thấp (0.1) để AI không sáng tạo bậy bạ
-  // 2. Dặn dò cực gắt trong System Prompt
   const rawData = await groqJson(
-    "You are a strict JSON generator. Output ONLY a valid JSON array. No talk, no markdown, no code blocks.",
-    `Generate exactly 16 English vocabulary items for the topic "${topic}". 
-    Format: [{"en":"word","vi":"nghĩa","pro":"/phiên âm/","ex":"ví dụ ngắn"}]. 
-    Ensure the JSON is minified and has no trailing commas.`,
-    0.1 
+    "You are a strict JSON generator. Output ONLY raw JSON. No markdown, no conversational text, no explanations.",
+    `Generate a JSON array of 16 English words for topic: "${topic}". Format: [{"en":"word","vi":"nghĩa","pro":"/phiên âm/","ex":"ví dụ"}].`,
+    0.1 // Giảm nhiệt độ xuống mức tối thiểu để tránh AI sáng tạo bậy
   );
 
-  // 3. Kiểm tra và làm sạch dữ liệu
-  if (!rawData || !Array.isArray(rawData)) {
-    throw new Error("AI trả về định dạng lạ, đại ca bấm lại phát nữa nhé!");
+  if (!Array.isArray(rawData)) {
+    throw new Error("AI trả về sai cấu trúc danh sách.");
   }
 
-  // Lọc lấy những từ đủ cấu hình, tránh làm sập app nếu AI viết thiếu 1-2 từ
-  const words = rawData
-    .map(item => {
-      try {
-        return normalizeWordEntry(item);
-      } catch (e) {
-        return null; 
-      }
-    })
-    .filter(Boolean);
+  const words = rawData.map(item => {
+    try {
+      return normalizeWordEntry(item);
+    } catch (e) {
+      return null;
+    }
+  }).filter(Boolean);
 
   if (words.length < 5) {
-    throw new Error("Bộ từ vựng bị lỗi cấu trúc. Đại ca thử lại nhé!");
+    throw new Error("Dữ liệu AI không đủ chất lượng, đại ca bấm lại nhé!");
   }
 
   return jsonResponse({ topic, words });
 }
-
 async function handleExplain(body) {
   const sentence = cleanText(body.sentence, { maxLength: 240 });
   const rawData = await groqJson(
