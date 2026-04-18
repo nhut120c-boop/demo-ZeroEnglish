@@ -1,6 +1,58 @@
-import { timingSafeEqual } from "node:crypto";
+import { timingSafeEqual, createHmac } from "node:crypto";
 
 const BRAND = "ZeroEnglish";
+
+// ─── JWT verification (matches auth.mjs) ───────────────────
+const JWT_SECRET = process.env.JWT_SECRET || "";
+
+function base64urlDecode(str) {
+  return Buffer.from(str, "base64url").toString("utf8");
+}
+
+function verifyJwt(token) {
+  if (!JWT_SECRET) return null;
+  try {
+    const parts = token.split(".");
+    if (parts.length !== 3) return null;
+    const [header, body, sig] = parts;
+    const expected = Buffer.from(
+      createHmac("sha256", JWT_SECRET).update(`${header}.${body}`).digest()
+    ).toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
+    const sigBuf = Buffer.from(sig + "==", "base64");
+    const expBuf = Buffer.from(expected + "==", "base64");
+    if (sigBuf.length !== expBuf.length || !timingSafeEqual(sigBuf, expBuf)) return null;
+    const payload = JSON.parse(base64urlDecode(body));
+    if (payload.exp < Math.floor(Date.now() / 1000)) return null;
+    return payload;
+  } catch { return null; }
+}
+
+/**
+ * Get the plan from the Authorization header.
+ * Returns "pro", "classic", or "anonymous".
+ */
+function getRequestPlan(request) {
+  const auth = request.headers.get("authorization") || "";
+  if (!auth.startsWith("Bearer ")) return "anonymous";
+  const payload = verifyJwt(auth.slice(7));
+  if (!payload) return "anonymous";
+  return payload.plan === "pro" ? "pro" : "classic";
+}
+
+/** Throw if plan is not "pro" */
+function requirePro(plan) {
+  if (plan !== "pro") {
+    throw new Error("Tính năng này chỉ dành cho thành viên Pro. Vui lòng nâng cấp tại trang cài đặt.");
+  }
+}
+
+/** Throw if user is not logged in */
+function requireLogin(plan) {
+  if (plan === "anonymous") {
+    throw new Error("Vui lòng đăng nhập để sử dụng tính năng này.");
+  }
+}
+// ───────────────────────────────────────────────────────────
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 const LEVEL_LABELS = {
   easy: "Dễ (A1-A2)",
@@ -566,6 +618,29 @@ async function handleChineseMatching(body) {
   });
 }
 
+// ─────────────────────────────────────────────────────
+// PLAN DEFINITIONS
+// Classic (free): flashcards, explain, matching, grammar (read-only)
+// Pro: ALL features — AI topic gen, reading, chat, listening, CN modules
+// ─────────────────────────────────────────────────────
+const PRO_ONLY_ENDPOINTS = new Set([
+  "ai/reading",
+  "ai/chat",
+  "ai/listening",
+  "ai/cn/topic",
+  "ai/cn/explain",
+  "ai/cn/reading",
+  "ai/cn/listening",
+  "ai/cn/matching",
+]);
+
+const LOGIN_REQUIRED_ENDPOINTS = new Set([
+  "ai/topic",
+  "ai/explain",
+  "ai/grammar",
+  "ai/matching",
+]);
+
 export default async (request) => {
   if (request.method === "OPTIONS") {
     return new Response(null, { status: 204 });
@@ -585,59 +660,42 @@ export default async (request) => {
       return jsonResponse({ error: "Method không được hỗ trợ." }, 405);
     }
 
+    // ── Plan / Auth gating ────────────────────────────
+    const plan = getRequestPlan(request);
+
+    if (PRO_ONLY_ENDPOINTS.has(endpoint)) {
+      requireLogin(plan);
+      requirePro(plan);
+    } else if (LOGIN_REQUIRED_ENDPOINTS.has(endpoint)) {
+      requireLogin(plan);
+    }
+    // ─────────────────────────────────────────────────
+
     const body = await parseRequestBody(request);
 
-    if (endpoint === "ai/topic") {
-      return await handleTopic(body);
-    }
-    if (endpoint === "ai/explain") {
-      return await handleExplain(body);
-    }
-    if (endpoint === "ai/reading") {
-      return await handleReading(body);
-    }
-    if (endpoint === "ai/grammar") {
-      return await handleGrammar(body);
-    }
-    if (endpoint === "ai/chat") {
-      return await handleChat(body);
-    }
-    if (endpoint === "ai/listening") {
-      return await handleListening(body);
-    }
-    if (endpoint === "ai/matching") {
-      return await handleMatching(body);
-    }
-    if (endpoint === "ai/cn/topic") {
-      return await handleChineseTopic(body);
-    }
-    if (endpoint === "ai/cn/explain") {
-      return await handleChineseExplain(body);
-    }
-    if (endpoint === "ai/cn/reading") {
-      return await handleChineseReading(body);
-    }
-    if (endpoint === "ai/cn/listening") {
-      return await handleChineseListening(body);
-    }
-    if (endpoint === "ai/cn/matching") {
-      return await handleChineseMatching(body);
-    }
+    if (endpoint === "ai/topic") return await handleTopic(body);
+    if (endpoint === "ai/explain") return await handleExplain(body);
+    if (endpoint === "ai/reading") return await handleReading(body);
+    if (endpoint === "ai/grammar") return await handleGrammar(body);
+    if (endpoint === "ai/chat") return await handleChat(body);
+    if (endpoint === "ai/listening") return await handleListening(body);
+    if (endpoint === "ai/matching") return await handleMatching(body);
+    if (endpoint === "ai/cn/topic") return await handleChineseTopic(body);
+    if (endpoint === "ai/cn/explain") return await handleChineseExplain(body);
+    if (endpoint === "ai/cn/reading") return await handleChineseReading(body);
+    if (endpoint === "ai/cn/listening") return await handleChineseListening(body);
+    if (endpoint === "ai/cn/matching") return await handleChineseMatching(body);
 
     return jsonResponse({ error: "Endpoint không tồn tại." }, 404);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Có lỗi nội bộ xảy ra trên server.";
     const status = (
-      message.includes("không hợp lệ")
-      || message.includes("Thiếu")
-      || message.includes("Sai admin token")
-      || message.includes("Method không được hỗ trợ")
-    ) ? 400 : (
-      message.includes("chưa được cấu hình")
-      || message.includes("AI backend")
-      || message.includes("AI trả về lỗi HTTP")
-    ) ? 503 : 500;
-
+      message.includes("Vui lòng đăng nhập") ? 401 :
+      message.includes("chỉ dành cho thành viên Pro") ? 403 :
+      message.includes("không hợp lệ") || message.includes("Thiếu") || message.includes("Sai admin token") ? 400 :
+      message.includes("chưa được cấu hình") || message.includes("AI backend") || message.includes("AI trả về lỗi HTTP") ? 503
+      : 500
+    );
     return jsonResponse({ error: message }, status);
   }
 };
