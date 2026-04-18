@@ -18,8 +18,34 @@ function setFlashcardVisibility(hasWord) {
     }
 
     function resetFlashcardFlip() {
-        // Trả thẻ về mặt trước mà không gây khựng
+        // Tắt hiệu ứng chuyển cảnh để trả về mặt trước ngay lập tức
+        refs.flashcard.style.transition = 'none';
         refs.flashcard.classList.remove("is-flipped");
+        
+        // Ép trình duyệt cập nhật lại trạng thái (force reflow)
+        void refs.flashcard.offsetHeight;
+        
+        // Khôi phục lại hiệu ứng xoay cho lần click lật thẻ sau đó
+        setTimeout(() => {
+            refs.flashcard.style.transition = '';
+        }, 10);
+    }
+
+    function stepCard(delta) {
+        const wordList = state.appData[state.currentTopic] || [];
+        const nextIndex = state.currentIndex + delta;
+        
+        if (nextIndex < 0 || nextIndex >= wordList.length) return;
+
+        // Reset mặt thẻ về phía trước ngay lập tức TRƯỚC khi đổi dữ liệu
+        resetFlashcardFlip();
+
+        state.currentIndex = nextIndex;
+        hide(refs.explanationBox);
+        refs.explanationText.textContent = "";
+        
+        // Hiển thị nội dung thẻ mới
+        showCard();
     }
 
     function toggleFlashcard() {
@@ -78,18 +104,6 @@ function setFlashcardVisibility(hasWord) {
         hide(refs.explanationBox);
         refs.explanationText.textContent = "";
         renderTopics();
-        showCard();
-    }
-
-    function stepCard(delta) {
-        const wordList = state.appData[state.currentTopic] || [];
-        const nextIndex = state.currentIndex + delta;
-        if (nextIndex < 0 || nextIndex >= wordList.length) return;
-
-        state.currentIndex = nextIndex;
-        resetFlashcardFlip();
-        hide(refs.explanationBox);
-        refs.explanationText.textContent = "";
         showCard();
     }
 

@@ -277,67 +277,64 @@ select:focus {
     perspective: 1100px;
 }
 
+/* --- FLASHCARD: FIX TRÀN CHỮ & LỘ ĐÁP ÁN --- */
 .flashcard {
     position: relative;
     width: 100%;
     height: 100%;
-    background: transparent;
-    padding: 0;
-    border: none;
-    appearance: none;
-    -webkit-appearance: none;
-    user-select: none;
-    -webkit-user-select: none;
-    touch-action: manipulation;
-    -webkit-tap-highlight-color: transparent;
     transform-style: preserve-3d;
-    transition: transform 0.55s ease;
+    transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
     cursor: pointer;
 }
 
-.flashcard:hover {
-    transform: none !important;
+/* Class bổ trợ để tắt hiệu ứng khi reset (Dùng trong JS) */
+.no-transition {
+    transition: none !important;
 }
 
 .flashcard.is-flipped {
     transform: rotateY(180deg) !important;
 }
 
-.flashcard.is-animating {
-    pointer-events: none;
-}
-
 .card-face {
     position: absolute;
     inset: 0;
+    backface-visibility: hidden !important;
+    -webkit-backface-visibility: hidden !important;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 12px;
-    padding: 28px;
+    padding: 25px;
     border-radius: 28px;
-    backface-visibility: hidden !important;
-    -webkit-backface-visibility: hidden !important;
-    transform: translateZ(0); 
+    overflow: hidden; /* Fix tràn chữ ra ngoài thẻ */
+}
+
+/* FIX: Tràn chữ mặt trước và mất chữ mặt sau */
+.word-main {
+    font-size: clamp(20px, 4vw, 38px); 
+    font-weight: 800;
+    line-height: 1.2;
+    width: 100%;
     text-align: center;
-    border: 1px solid rgba(13, 110, 253, 0.12);
-    box-shadow: var(--shadow-sm);
+    word-wrap: break-word;
+    
+    /* FIX CẢNH BÁO VS CODE & TRÀN CHỮ */
+    display: -webkit-box;
+    -webkit-line-clamp: 4; /* Cho Webkit (Chrome, Cốc Cốc, Safari) */
+    line-clamp: 4;         /* Thuộc tính tiêu chuẩn (Xóa lỗi xanh) */
+    -webkit-box-orient: vertical;
+    
+    overflow: hidden;
+    color: inherit;
 }
 
-.card-front {
-    background: linear-gradient(180deg, #ffffff, #f9fcff);
-    z-index: 2;
-    transform: rotateY(0deg);
-}
-
-.card-back {
-    background: linear-gradient(180deg, #0d6efd, #0a4fb5);
-    color: #fff;
+.card-front { background: #fff; z-index: 2; transform: rotateY(0deg); }
+.card-back { 
+    background: linear-gradient(135deg, var(--blue), var(--blue-deep)); 
+    color: #fff !important; /* Đảm bảo chữ trắng nổi bật trên nền xanh */
     transform: rotateY(180deg);
 }
-
-/* ==================================================================== */
 
 .word-main {
     font-size: clamp(32px, 4vw, 44px);

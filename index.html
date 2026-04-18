@@ -4,16 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ZeroEnglish - Nền Tảng Học Thuật Thông Minh</title>
-    <meta name="description" content="ZeroEnglish - Hệ thống học tiếng Anh ứng dụng AI, thiết kế theo phương pháp khoa học giúp bạn phát triển kỹ năng ngoại ngữ chuyên sâu.">
+    <meta name="description" content="ZeroEnglish - Hệ thống học tiếng Anh ứng dụng AI, tối ưu hóa lộ trình phát triển kỹ năng ngoại ngữ chuyên sâu.">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="app-shell">
         <header class="navbar">
             <div class="brand-block">
-                <p class="brand-kicker">Nền Tảng Học Thuật Thông Minh</p>
+                <p class="brand-kicker">Hệ Thống Phân Tích Ngôn Ngữ</p>
                 <h1 class="logo">ZeroEnglish</h1>
-                <p class="brand-copy">Hệ thống học tiếng Anh ứng dụng AI, thiết kế theo phương pháp khoa học giúp bạn ghi nhớ và phát triển kỹ năng ngoại ngữ chuyên sâu.</p>
+                <p class="brand-copy">Nền tảng ứng dụng trí tuệ nhân tạo trong việc tối ưu hóa lộ trình học thuật và phát triển kỹ năng ngoại ngữ chuyên sâu.</p>
             </div>
         </header>
 
@@ -32,19 +32,25 @@
                 <aside class="sidebar">
                     <div class="panel-heading">
                         <h2>Chủ đề học thuật</h2>
-                        <p>Xây dựng lộ trình từ vựng cá nhân hóa theo định hướng học tập của riêng bạn.</p>
+                        <p>Xây dựng lộ trình từ vựng cá nhân hóa theo định hướng học tập.</p>
                     </div>
                     <div class="input-group">
-                        <input type="text" id="topicInput" placeholder="Ví dụ: kinh tế vĩ mô, IELTS">
-                        <button id="generateBtn" class="btn-primary" type="button">Khởi tạo chủ đề AI</button>
+                        <input type="text" id="topicInput" placeholder="Ví dụ: Kinh tế vĩ mô, IELTS, Công nghệ...">
+                        <button id="generateBtn" class="btn-primary" type="button">Khởi tạo dữ liệu</button>
                     </div>
                     <p id="loadingMsg" class="status-note hidden">Hệ thống đang tổng hợp dữ liệu...</p>
                     <ul id="topicList" class="topic-list"></ul>
                 </aside>
 
                 <div class="main-content">
-                    <div class="content-heading">
-                        <h2 id="currentTopicTitle">Vui lòng chọn một chủ đề học thuật</h2>
+                    <div id="flashcardPlaceholder" class="empty-state-wrapper">
+                        <div class="empty-state-icon">🗂️</div>
+                        <h3>Hệ thống sẵn sàng</h3>
+                        <p>Vui lòng khởi tạo hoặc chọn một chủ đề học thuật từ danh sách bên trái để bắt đầu quá trình ghi nhớ.</p>
+                    </div>
+
+                    <div class="content-heading hidden" id="flashcardHeader">
+                        <h2 id="currentTopicTitle">Chủ đề hiện tại</h2>
                         <p id="progressText">0 / 0</p>
                     </div>
 
@@ -53,22 +59,21 @@
                             <span class="card-face card-front">
                                 <span id="wordEn" class="word-main">Word</span>
                                 <span id="wordPro" class="word-pro">/pronunciation/</span>
-                                <span class="hint">Chạm để xem định nghĩa</span>
                             </span>
                             <span class="card-face card-back">
-                                <span id="wordVi" class="word-main word-main-vi">Từ vựng</span>
-                                <span id="wordEx" class="example">Example sentence</span>
+                                <span id="wordVi" class="word-main word-main-vi">Định nghĩa</span>
+                                <span id="wordEx" class="example">Câu ví dụ minh họa ngữ cảnh.</span>
                             </span>
                         </button>
                     </div>
 
                     <div id="actionButtons" class="action-buttons hidden">
                         <button id="saveWordBtn" class="btn-warning" type="button">Lưu thuật ngữ</button>
-                        <button id="explainGrammarBtn" class="btn-success" type="button">Phân tích ngữ pháp AI</button>
+                        <button id="explainGrammarBtn" class="btn-success" type="button">Phân tích cấu trúc</button>
                     </div>
 
                     <div id="explanationBox" class="panel-note hidden">
-                        <strong>Phân tích cấu trúc ngữ pháp</strong>
+                        <strong>Phân tích ngữ pháp chuyên sâu</strong>
                         <p id="explanationText"></p>
                     </div>
 
@@ -82,8 +87,8 @@
             <section id="view-reading" class="view-section hidden flex-col">
                 <div class="section-head">
                     <div>
-                        <h2>Đọc hiểu AI</h2>
-                        <p>Phát triển kỹ năng đọc qua các văn bản tổng hợp theo cấp độ.</p>
+                        <h2>Phân tích văn bản</h2>
+                        <p>Phát triển kỹ năng đọc hiểu qua các văn bản chuyên sâu.</p>
                     </div>
                     <div class="section-actions">
                         <select id="levelSelect">
@@ -95,14 +100,10 @@
                     </div>
                 </div>
 
-                <p id="readingLoadingMsg" class="status-note hidden">Hệ thống đang tổng hợp văn bản...</p>
-                
-                <div id="readingPlaceholder">
-                    <div class="empty-state">
-                        <div class="empty-state-icon">📖</div>
-                        <h3>Sẵn sàng để khai phá kiến thức?</h3>
-                        <p>Chọn cấp độ phù hợp và nhấn "Khởi tạo văn bản". Hệ thống AI sẽ biên soạn một bài đọc chuyên biệt dành riêng cho bạn.</p>
-                    </div>
+                <div id="readingPlaceholder" class="empty-state-wrapper">
+                    <div class="empty-state-icon">📖</div>
+                    <h3>Dữ liệu phân tích trống</h3>
+                    <p>Vui lòng lựa chọn khung năng lực và khởi tạo văn bản để bắt đầu quá trình phân tích ngôn ngữ học thuật.</p>
                 </div>
 
                 <div id="readingBox" class="content-box hidden">
@@ -117,24 +118,22 @@
                 <div class="section-head">
                     <div>
                         <h2>Ngữ pháp nền tảng</h2>
-                        <p>Hệ thống hóa cấu trúc với lý thuyết trọng tâm và ví dụ thực tiễn.</p>
+                        <p>Hệ thống hóa cấu trúc ngữ pháp trọng tâm.</p>
                     </div>
                     <div class="section-actions">
                         <select id="grammarSelect">
                             <option value="Thì hiện tại đơn">Thì hiện tại đơn</option>
                             <option value="Thì quá khứ đơn">Thì quá khứ đơn</option>
-                            <option value="Câu điều kiện loại 1">Câu điều kiện loại 1</option>
+                            <option value="Mệnh đề quan hệ">Mệnh đề quan hệ</option>
                         </select>
                         <button id="generateGrammarBtn" class="btn-primary" type="button">Biên soạn tài liệu</button>
                     </div>
                 </div>
 
-                <div id="grammarPlaceholder">
-                    <div class="empty-state">
-                        <div class="empty-state-icon">🧩</div>
-                        <h3>Trạm Phân Tích Cấu Trúc</h3>
-                        <p>Bạn gặp khó khăn với cấu trúc câu nào? Hãy chọn chủ đề và nhấn "Biên soạn", AI sẽ mổ xẻ từng thành phần cho bạn.</p>
-                    </div>
+                <div id="grammarPlaceholder" class="empty-state-wrapper">
+                    <div class="empty-state-icon">🧩</div>
+                    <h3>Trung tâm dữ liệu cấu trúc</h3>
+                    <p>Chọn chủ đề ngữ pháp cần củng cố kiến thức để hệ thống xuất bản tài liệu hướng dẫn và ví dụ minh họa.</p>
                 </div>
 
                 <div id="grammarBox" class="content-box hidden">
@@ -143,88 +142,113 @@
                         <h4>Công thức cấu trúc</h4>
                         <p id="grammarFormula" class="grammar-formula"></p>
                     </div>
+                    <div class="grammar-card">
+                        <h4>Nguyên tắc sử dụng</h4>
+                        <p id="grammarUsage"></p>
+                    </div>
+                    <ul id="grammarExamples" class="grammar-examples"></ul>
                 </div>
             </section>
 
             <section id="view-chat" class="view-section hidden flex-col">
-                <div class="chat-wrapper">
-                    <div class="chat-header">
-                        <h2>Gia sư AI</h2>
-                        <p>Trao đổi trực tiếp với trợ lý học thuật để giải đáp chuyên sâu.</p>
-                    </div>
-                    <div id="chatBox" class="chat-box" aria-live="polite">
-                        <div class="message ai-message">
-                            <div class="msg-bubble">
-                                <strong>Chào đại ca! 🤖</strong><br>
-                                Tôi là trợ lý AI chuyên sâu về ngôn ngữ. Bạn có thể hỏi tôi về bất kỳ cấu trúc hay từ vựng nào!
-                            </div>
+                <div class="chat-header">
+                    <h2>Trung tâm hỗ trợ học thuật</h2>
+                    <p>Giải đáp thắc mắc về ngôn ngữ và cấu trúc chuyên sâu 24/7.</p>
+                </div>
+                <div id="chatBox" class="chat-box" aria-live="polite">
+                    <div class="message ai-message">
+                        <div class="msg-bubble">
+                            <strong>Hệ thống trực tuyến.</strong><br>
+                            Vui lòng nhập câu hỏi hoặc yêu cầu phân tích ngữ nghĩa để nhận phản hồi từ trợ lý học thuật.
                         </div>
                     </div>
-                    <div class="chat-input-area">
-                        <input type="text" id="chatInput" placeholder="Nhập câu hỏi và nhấn Enter..." autocomplete="off">
-                        <button id="sendChatBtn" class="btn-primary" type="button">Gửi yêu cầu</button>
-                    </div>
+                </div>
+                <div class="chat-input-area">
+                    <input type="text" id="chatInput" placeholder="Nhập yêu cầu truy vấn học thuật...">
+                    <button id="sendChatBtn" class="btn-primary" type="button">Gửi truy vấn</button>
                 </div>
             </section>
 
             <section id="view-listening" class="view-section hidden flex-col">
                 <div class="section-head">
                     <div>
-                        <h2>Luyện nghe</h2>
-                        <p>Nâng cao năng lực thính lực qua các bài kiểm tra AI.</p>
+                        <h2>Kiểm tra thính lực</h2>
+                        <p>Đánh giá năng lực tiếp nhận thông tin qua âm thanh và bài thi kiểm tra.</p>
                     </div>
                     <div class="section-actions">
                         <select id="listenLevelSelect">
                             <option value="easy">Sơ cấp (A1-A2)</option>
                             <option value="medium">Trung cấp (B1-B2)</option>
                         </select>
-                        <button id="generateListenBtn" class="btn-primary" type="button">Khởi tạo bài kiểm tra</button>
+                        <button id="generateListenBtn" class="btn-primary" type="button">Khởi tạo bài thi</button>
                     </div>
                 </div>
 
-                <div id="listeningPlaceholder">
-                    <div class="empty-state">
-                        <div class="empty-state-icon">🎧</div>
-                        <h3>Trạm luyện thính giác AI</h3>
-                        <p>Hãy khởi tạo một bài nghe để bắt đầu bài kiểm tra đánh giá năng lực ngay lập tức.</p>
-                    </div>
+                <div id="listeningPlaceholder" class="empty-state-wrapper">
+                    <div class="empty-state-icon">🎧</div>
+                    <h3>Trạm luyện thính giác</h3>
+                    <p>Vui lòng lựa chọn cấp độ và khởi tạo bài kiểm tra để bắt đầu đánh giá năng lực nghe hiểu.</p>
                 </div>
 
                 <div id="listeningBox" class="content-box hidden">
                     <div class="audio-controls">
                         <button id="playAudioBtn" class="btn-success" type="button">Phát Audio</button>
+                        <button id="stopAudioBtn" class="btn-danger" type="button">Dừng phát</button>
                     </div>
                     <div id="quizContainer" class="quiz-container"></div>
+                    <div class="listen-actions">
+                        <button id="submitQuizBtn" class="btn-primary" type="button">Hoàn thành bài</button>
+                    </div>
+                    <div id="quizResult" class="quiz-result hidden"></div>
                 </div>
             </section>
 
             <section id="view-matching" class="view-section hidden flex-col">
                 <div class="section-head">
                     <div>
-                        <h2>Ghép từ AI</h2>
-                        <p>Củng cố phản xạ ngôn ngữ qua phương pháp ghép cặp thuật ngữ.</p>
+                        <h2>Ghép từ phản xạ</h2>
+                        <p>Củng cố tư duy ngôn ngữ qua phương pháp ghép cặp thuật ngữ.</p>
                     </div>
                     <div class="section-actions">
                         <select id="matchingLevelSelect">
                             <option value="easy">Cơ bản</option>
+                            <option value="hard">Chuyên sâu</option>
                         </select>
                         <button id="generateMatchingBtn" class="btn-primary" type="button">Thiết lập dữ liệu</button>
                     </div>
                 </div>
+
+                <div id="matchingPlaceholder" class="empty-state-wrapper">
+                    <div class="empty-state-icon">🔗</div>
+                    <h3>Dữ liệu ghép cặp chưa sẵn sàng</h3>
+                    <p>Khởi tạo bảng ghép để bắt đầu luyện tập phản xạ kết nối thuật ngữ và định nghĩa tương ứng.</p>
+                </div>
+
                 <div id="matchingBox" class="content-box hidden">
                     <div class="matching-board">
-                        <div class="matching-column" id="matchingEnList"></div>
-                        <div class="matching-column" id="matchingViList"></div>
+                        <div class="matching-column">
+                            <h3>Thuật ngữ</h3>
+                            <div id="matchingEnList" class="matching-list"></div>
+                        </div>
+                        <div class="matching-column">
+                            <h3>Định nghĩa</h3>
+                            <div id="matchingViList" class="matching-list"></div>
+                        </div>
                     </div>
+                    <div id="matchingFeedback" class="matching-feedback">Vui lòng chọn các cặp từ tương ứng.</div>
                 </div>
             </section>
 
             <section id="view-saved" class="view-section hidden flex-col">
                 <div class="saved-header">
-                    <h2>Sổ tay từ vựng</h2>
-                    <button id="clearSavedBtn" class="btn-danger" type="button">Làm sạch sổ tay</button>
+                    <div>
+                        <h2>Sổ tay thuật ngữ chuyên sâu</h2>
+                        <p>Danh sách các thuật ngữ trọng tâm được lưu trữ phục vụ quá trình ôn tập định kỳ.</p>
+                    </div>
+                    <button id="clearSavedBtn" class="btn-danger" type="button">Xóa toàn bộ</button>
                 </div>
-                <div id="savedWordsGrid" class="saved-grid"></div>
+                <div id="savedWordsGrid" class="saved-grid">
+                    </div>
             </section>
         </main>
     </div>
