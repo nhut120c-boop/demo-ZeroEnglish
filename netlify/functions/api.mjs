@@ -434,14 +434,30 @@ async function handleChat(body) {
 
 async function handleListening(body) {
   const level = parseLevel(body.level);
+  const levelMap = { easy: "beginner (A1-A2)", medium: "intermediate (B1-B2)", hard: "advanced (C1-C2)" };
+  const levelEn = levelMap[level] || "intermediate";
   const rawData = await groqJson(
-    "Bạn tạo bài listening cho người Việt và chỉ trả JSON thuần.",
-    `Tạo transcript nghe 70-100 từ ở mức ${LEVEL_LABELS[level]}. Sinh 3 câu trắc nghiệm, mỗi câu có 4 lựa chọn và answerIndex. Trả JSON: {"transcript":"...","questions":[{"q":"...","options":["A","B","C","D"],"answerIndex":0}]}`,
-    0.25,
+    "You are a strict English listening exercise generator for Vietnamese learners. " +
+    "RULE 1: The transcript field MUST be 100% in English - zero Vietnamese words. " +
+    "RULE 2: Questions and options must be in Vietnamese. " +
+    "RULE 3: Output raw JSON only, no markdown, no explanation.",
+    `Create an English listening exercise at ${levelEn} level.` +
+    " Write a natural English monologue or short dialogue of 70-100 English words (topic: daily life, travel, work, or news)." +
+    " Then write 3 comprehension questions in Vietnamese, each with 4 Vietnamese answer options." +
+    ` Return ONLY this JSON (no extra text): {"transcript":"<ENGLISH ONLY>","questions":[{"q":"<câu hỏi tiếng Việt>","options":["<A>","<B>","<C>","<D>"],"answerIndex":0}]}`,
+    0.15,
   );
 
+  // Validate transcript is English (basic check: must not be >50% Vietnamese chars)
+  const transcript = cleanText(rawData?.transcript, { maxLength: 1400 });
+  const vietnamesePattern = /[àáâãèéêìíòóôõùúýăđơưạảấầẩẫậắằẳẵặẹẻẽếềểễệỉịọỏốồổỗộớờởỡợụủứừửữựỳỷỹ]/gi;
+  const vnMatches = (transcript.match(vietnamesePattern) || []).length;
+  if (vnMatches > 5) {
+    throw new Error("AI generated Vietnamese instead of English transcript. Please retry.");
+  }
+
   return jsonResponse({
-    transcript: cleanText(rawData?.transcript, { maxLength: 1400 }),
+    transcript,
     questions: normalizeQuestions(rawData?.questions),
   });
 }
@@ -553,13 +569,31 @@ async function handleChineseReading(body) {
 
 async function handleChineseListening(body) {
   const level = parseLevel(body.level);
+  const levelMap = { easy: "sơ cấp HSK 1-2 (câu ngắn, từ đơn giản)", medium: "trung cấp HSK 3-4 (câu phức tạp hơn)" };
+  const levelVi = levelMap[level] || "trung cấp";
   const rawData = await groqJson(
-    "Bạn tạo bài nghe tiếng Trung cho người Việt. Chỉ trả JSON thuần.",
-    `Tạo transcript hội thoại tiếng Trung 50-80 từ ở mức ${LEVEL_LABELS[level]}. Sinh 3 câu trắc nghiệm bằng tiếng Việt, mỗi câu 4 lựa chọn và answerIndex. Trả JSON: {"transcript":"...","questions":[{"q":"...","options":["A","B","C","D"],"answerIndex":0}]}`,
-    0.25,
+    "Bạn là chuyên gia tạo bài nghe tiếng Trung cho người học Việt Nam. " +
+    "QUY TẮC BẮT BUỘC: " +
+    "1. Trường transcript PHẢI viết HOÀN TOÀN bằng tiếng Trung (chữ Hán/Pinyin) - TUYỆT ĐỐI không có tiếng Việt hay tiếng Anh trong transcript. " +
+    "2. Câu hỏi (q) và đáp án (options) PHẢI viết bằng tiếng Việt. " +
+    "3. Chỉ trả JSON thuần, không markdown, không giải thích.",
+    `Tạo bài nghe tiếng Trung mức ${levelVi}.` +
+    " Viết một đoạn hội thoại hoặc độc thoại bằng TIẾNG TRUNG (chữ Hán) dài 50-80 từ, chủ đề: cuộc sống hàng ngày, ẩm thực, du lịch, hoặc công việc." +
+    " Sau đó sinh 3 câu trắc nghiệm BẰNG TIẾNG VIỆT để kiểm tra hiểu nội dung, mỗi câu có 4 lựa chọn tiếng Việt." +
+    ` Chỉ trả JSON này (không thêm gì khác): {"transcript":"<CHỮ HÁN>","questions":[{"q":"<câu hỏi tiếng Việt>","options":["<A>","<B>","<C>","<D>"],"answerIndex":0}]}`,
+    0.15,
   );
+
+  // Validate transcript contains Chinese characters
+  const transcript = cleanText(rawData?.transcript, { maxLength: 1400 });
+  const chinesePattern = /[一-鿿]/g;
+  const cnMatches = (transcript.match(chinesePattern) || []).length;
+  if (cnMatches < 5) {
+    throw new Error("AI không tạo được transcript tiếng Trung. Vui lòng thử lại.");
+  }
+
   return jsonResponse({
-    transcript: cleanText(rawData?.transcript, { maxLength: 1400 }),
+    transcript,
     questions: normalizeQuestions(rawData?.questions),
   });
 }
