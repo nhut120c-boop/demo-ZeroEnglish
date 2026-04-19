@@ -213,17 +213,17 @@
         });
     }
 
-    function buildChineseUtterance(transcript, level) {
+    function buildChineseUtterance(transcript, level, voices) {
         if (!window.speechSynthesis) return null;
         const utterance = new SpeechSynthesisUtterance(transcript);
         utterance.lang = "zh-CN";
         utterance.rate = level === "easy" ? 0.75 : 0.9;
-        // Tường minh chọn giọng zh-CN
-        const voices = window.speechSynthesis.getVoices();
-        const zhVoice = voices.find(v => v.lang === "zh-CN")
-            || voices.find(v => v.lang === "zh-TW")
-            || voices.find(v => v.lang.startsWith("zh"));
-        if (zhVoice) utterance.voice = zhVoice;
+        if (voices && voices.length > 0) {
+            const zhVoice = voices.find(v => v.lang === "zh-CN")
+                || voices.find(v => v.lang === "zh-TW")
+                || voices.find(v => v.lang.startsWith("zh"));
+            if (zhVoice) utterance.voice = zhVoice;
+        }
         return utterance;
     }
 
@@ -285,15 +285,16 @@
     function initChineseListening() {
         refs.cnGenerateListenBtn.addEventListener("click", handleChineseListeningGeneration);
         refs.cnSubmitQuizBtn.addEventListener("click", handleChineseSubmitQuiz);
-        refs.cnPlayAudioBtn.addEventListener("click", () => {
+        refs.cnPlayAudioBtn.addEventListener("click", async () => {
             if (!state.cnCurrentListening.transcript || !window.speechSynthesis) {
                 showError("Chưa có đoạn nghe để phát."); return;
             }
             if (window.speechSynthesis.paused) { window.speechSynthesis.resume(); return; }
-            // Luôn rebuild utterance mới với giọng zh-CN được chọn tường minh
             window.speechSynthesis.cancel();
             const level = state.cnCurrentListening.level || "medium";
-            const freshUtterance = buildChineseUtterance(state.cnCurrentListening.transcript, level);
+            // Chờ voices load xong (fix mobile: getVoices trả [] lần đầu)
+            const voices = await waitForVoices();
+            const freshUtterance = buildChineseUtterance(state.cnCurrentListening.transcript, level, voices);
             if (freshUtterance) window.speechSynthesis.speak(freshUtterance);
         });
         refs.cnStopAudioBtn.addEventListener("click", () => {

@@ -683,6 +683,12 @@ select:focus {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 18px;
     margin-top: 20px;
+    overflow: visible;
+}
+
+.matching-column {
+    min-width: 0;
+    overflow: visible;
 }
 
 .matching-column h3 {
@@ -692,17 +698,23 @@ select:focus {
 .matching-list {
     display: grid;
     gap: 12px;
+    min-width: 0;
+    overflow: visible;
 }
 
 .matching-option {
     width: 100%;
     padding: 14px 16px;
-    border-radius: 16px;
-    text-align: left;
+    border-radius: 16px !important;
+    text-align: center;
     background: rgba(255, 255, 255, 0.96);
     border: 1px solid rgba(13, 110, 253, 0.1);
     color: var(--text-main);
     font-weight: 700;
+    /* Override global button: cho phép xuống dòng và co lại trong grid cell */
+    white-space: normal !important;
+    word-break: break-word;
+    box-sizing: border-box;
 }
 
 .matching-option.is-selected {
@@ -876,10 +888,18 @@ select:focus {
 }
 
 @media (max-width: 720px) {
+    body {
+        padding: 10px;
+    }
+
     .tabs {
         flex-wrap: nowrap;
         overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        padding-bottom: 4px;
     }
+    .tabs::-webkit-scrollbar { display: none; }
 
     .flex-col,
     .main-content,
@@ -897,6 +917,33 @@ select:focus {
 
     .reading-text {
         font-size: 18px;
+    }
+
+    .section-head {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+
+    .section-actions {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .audio-controls,
+    .listen-actions,
+    .action-buttons,
+    .controls {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .navbar {
+        padding: 16px 14px;
+    }
+
+    .matching-board {
+        grid-template-columns: 1fr;
     }
 }
 .flashcard:hover .card-front {

@@ -999,15 +999,26 @@ function setFlashcardVisibility(hasWord) {
         });
     }
 
-    function buildUtterance(transcript, level) {
+    // Promise-based: chờ voices load xong mới resolve (fix getVoices trả [] lần đầu)
+    function waitForVoices() {
+        return new Promise((resolve) => {
+            const voices = window.speechSynthesis.getVoices();
+            if (voices.length > 0) { resolve(voices); return; }
+            window.speechSynthesis.onvoiceschanged = () => {
+                resolve(window.speechSynthesis.getVoices());
+            };
+        });
+    }
+
+    function buildUtterance(transcript, level, voices) {
         if (!window.speechSynthesis) return null;
         const utterance = new SpeechSynthesisUtterance(transcript);
         utterance.lang = "en-US";
         utterance.rate = level === "easy" ? 0.82 : level === "medium" ? 0.95 : 1.04;
-        // Tường minh chọn giọng en-US để tránh bị giữ giọng zh-CN từ session trước
-        const voices = window.speechSynthesis.getVoices();
-        const enVoice = voices.find(v => v.lang === "en-US") || voices.find(v => v.lang.startsWith("en"));
-        if (enVoice) utterance.voice = enVoice;
+        if (voices && voices.length > 0) {
+            const enVoice = voices.find(v => v.lang === "en-US") || voices.find(v => v.lang.startsWith("en"));
+            if (enVoice) utterance.voice = enVoice;
+        }
         return utterance;
     }
 
@@ -1072,16 +1083,17 @@ function setFlashcardVisibility(hasWord) {
         refs.submitQuizBtn.disabled = true;
     }
 
-    function handlePlayAudio() {
+    async function handlePlayAudio() {
         if (!state.currentListening.transcript || !window.speechSynthesis) {
             showError("Chưa có đoạn nghe. Vui lòng tạo bài trước.");
             return;
         }
         if (window.speechSynthesis.paused) { window.speechSynthesis.resume(); return; }
-        // Luôn cancel và rebuild utterance mới — không tái sử dụng object cũ đã bị "consumed"
         window.speechSynthesis.cancel();
         const level = refs.listenLevelSelect ? refs.listenLevelSelect.value : "medium";
-        const freshUtterance = buildUtterance(state.currentListening.transcript, level);
+        // Chờ voices load xong rồi mới build utterance (fix getVoices trả [] lần đầu)
+        const voices = await waitForVoices();
+        const freshUtterance = buildUtterance(state.currentListening.transcript, level, voices);
         if (freshUtterance) window.speechSynthesis.speak(freshUtterance);
     }
 
@@ -1486,17 +1498,17 @@ function setFlashcardVisibility(hasWord) {
         });
     }
 
-    function buildChineseUtterance(transcript, level) {
+    function buildChineseUtterance(transcript, level, voices) {
         if (!window.speechSynthesis) return null;
         const utterance = new SpeechSynthesisUtterance(transcript);
         utterance.lang = "zh-CN";
         utterance.rate = level === "easy" ? 0.75 : 0.9;
-        // Tường minh chọn giọng zh-CN
-        const voices = window.speechSynthesis.getVoices();
-        const zhVoice = voices.find(v => v.lang === "zh-CN")
-            || voices.find(v => v.lang === "zh-TW")
-            || voices.find(v => v.lang.startsWith("zh"));
-        if (zhVoice) utterance.voice = zhVoice;
+        if (voices && voices.length > 0) {
+            const zhVoice = voices.find(v => v.lang === "zh-CN")
+                || voices.find(v => v.lang === "zh-TW")
+                || voices.find(v => v.lang.startsWith("zh"));
+            if (zhVoice) utterance.voice = zhVoice;
+        }
         return utterance;
     }
 
@@ -1558,15 +1570,16 @@ function setFlashcardVisibility(hasWord) {
     function initChineseListening() {
         refs.cnGenerateListenBtn.addEventListener("click", handleChineseListeningGeneration);
         refs.cnSubmitQuizBtn.addEventListener("click", handleChineseSubmitQuiz);
-        refs.cnPlayAudioBtn.addEventListener("click", () => {
+        refs.cnPlayAudioBtn.addEventListener("click", async () => {
             if (!state.cnCurrentListening.transcript || !window.speechSynthesis) {
                 showError("Chưa có đoạn nghe để phát."); return;
             }
             if (window.speechSynthesis.paused) { window.speechSynthesis.resume(); return; }
-            // Luôn rebuild utterance mới với giọng zh-CN được chọn tường minh
             window.speechSynthesis.cancel();
             const level = state.cnCurrentListening.level || "medium";
-            const freshUtterance = buildChineseUtterance(state.cnCurrentListening.transcript, level);
+            // Chờ voices load xong (fix mobile: getVoices trả [] lần đầu)
+            const voices = await waitForVoices();
+            const freshUtterance = buildChineseUtterance(state.cnCurrentListening.transcript, level, voices);
             if (freshUtterance) window.speechSynthesis.speak(freshUtterance);
         });
         refs.cnStopAudioBtn.addEventListener("click", () => {
