@@ -22,6 +22,7 @@
             transcript: "",
             questions: [],
             utterance: null,
+            level: "medium",
         },
         matching: {
             level: "easy",
@@ -49,6 +50,7 @@
             transcript: "",
             questions: [],
             utterance: null,
+            level: "medium",
         },
         cnMatching: {
             level: "easy",

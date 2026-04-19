@@ -64,7 +64,7 @@
 
             state.currentListening.transcript = data.transcript;
             state.currentListening.questions = data.questions;
-            state.currentListening.utterance = buildUtterance(data.transcript, level);
+            state.currentListening.level = level;
             refs.transcriptBox.textContent = data.transcript;
             renderListeningQuestions();
             show(refs.listeningBox);
@@ -108,8 +108,7 @@
         }
         if (window.speechSynthesis.paused) { window.speechSynthesis.resume(); return; }
         window.speechSynthesis.cancel();
-        const level = refs.listenLevelSelect ? refs.listenLevelSelect.value : "medium";
-        // Chờ voices load xong rồi mới build utterance (fix getVoices trả [] lần đầu)
+        const level = state.currentListening.level || (refs.listenLevelSelect ? refs.listenLevelSelect.value : "medium");
         const voices = await waitForVoices();
         const freshUtterance = buildUtterance(state.currentListening.transcript, level, voices);
         if (freshUtterance) window.speechSynthesis.speak(freshUtterance);

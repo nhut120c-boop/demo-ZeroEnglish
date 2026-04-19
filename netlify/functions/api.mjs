@@ -218,6 +218,23 @@ function normalizePairs(value, level) {
   return pairs;
 }
 
+// Riêng cho Chinese matching: field zh thay vì en
+function normalizeCnPairs(value, level) {
+  if (!Array.isArray(value)) {
+    throw new Error("Danh sách ghép từ không hợp lệ.");
+  }
+  const expectedCount = level === "easy" ? 6 : level === "medium" ? 8 : 10;
+  const pairs = value.slice(0, expectedCount).flatMap((item, index) => {
+    if (!item || typeof item !== "object") return [];
+    const zh = cleanText(item.zh || item.en, { maxLength: 80 }); // fallback: AI đôi khi trả "en" dù prompt dùng "zh"
+    return [{ id: index + 1, zh, vi: cleanText(item.vi, { maxLength: 120 }) }];
+  });
+  if (pairs.length < Math.min(expectedCount, 5)) {
+    throw new Error("AI chưa tạo đủ số cặp từ hợp lệ.");
+  }
+  return pairs;
+}
+
 function normalizeReadingPayload(data) {
   if (!data || typeof data !== "object" || Array.isArray(data)) {
     throw new Error("Dữ liệu bài đọc không hợp lệ.");
@@ -471,22 +488,22 @@ function resolveEndpoint(pathname) {
 
 const CN_MATCHING_FALLBACK = {
   easy: [
-    { en: "你好", vi: "Xin chào" }, { en: "谢谢", vi: "Cảm ơn" },
-    { en: "再见", vi: "Tạm biệt" }, { en: "吃饭", vi: "Ăn cơm" },
-    { en: "学习", vi: "Học tập" }, { en: "朋友", vi: "Bạn bè" },
+    { zh: "你好", vi: "Xin chào" }, { zh: "谢谢", vi: "Cảm ơn" },
+    { zh: "再见", vi: "Tạm biệt" }, { zh: "吃饭", vi: "Ăn cơm" },
+    { zh: "学习", vi: "Học tập" }, { zh: "朋友", vi: "Bạn bè" },
   ],
   medium: [
-    { en: "工作", vi: "Công việc" }, { en: "问题", vi: "Vấn đề" },
-    { en: "时间", vi: "Thời gian" }, { en: "城市", vi: "Thành phố" },
-    { en: "文化", vi: "Văn hóa" }, { en: "旅游", vi: "Du lịch" },
-    { en: "经验", vi: "Kinh nghiệm" }, { en: "发展", vi: "Phát triển" },
+    { zh: "工作", vi: "Công việc" }, { zh: "问题", vi: "Vấn đề" },
+    { zh: "时间", vi: "Thời gian" }, { zh: "城市", vi: "Thành phố" },
+    { zh: "文化", vi: "Văn hóa" }, { zh: "旅游", vi: "Du lịch" },
+    { zh: "经验", vi: "Kinh nghiệm" }, { zh: "发展", vi: "Phát triển" },
   ],
   hard: [
-    { en: "可持续", vi: "Bền vững" }, { en: "透明度", vi: "Sự minh bạch" },
-    { en: "竞争力", vi: "Năng lực cạnh tranh" }, { en: "创新", vi: "Sáng tạo" },
-    { en: "效率", vi: "Hiệu quả" }, { en: "挑战", vi: "Thách thức" },
-    { en: "机遇", vi: "Cơ hội" }, { en: "战略", vi: "Chiến lược" },
-    { en: "合作", vi: "Hợp tác" }, { en: "影响", vi: "Ảnh hưởng" },
+    { zh: "可持续", vi: "Bền vững" }, { zh: "透明度", vi: "Sự minh bạch" },
+    { zh: "竞争力", vi: "Năng lực cạnh tranh" }, { zh: "创新", vi: "Sáng tạo" },
+    { zh: "效率", vi: "Hiệu quả" }, { zh: "挑战", vi: "Thách thức" },
+    { zh: "机遇", vi: "Cơ hội" }, { zh: "战略", vi: "Chiến lược" },
+    { zh: "合作", vi: "Hợp tác" }, { zh: "影响", vi: "Ảnh hưởng" },
   ],
 };
 
@@ -551,16 +568,16 @@ async function handleChineseMatching(body) {
   const level = parseLevel(body.level);
   const aiEnabled = Boolean(process.env.GROQ_API_KEY?.trim() || process.env.ZEROENGLISH_GROQ_API_KEY?.trim());
   if (!aiEnabled) {
-    const fallback = CN_MATCHING_FALLBACK[level].map((pair, index) => ({ id: index + 1, en: pair.en, vi: pair.vi }));
+    const fallback = CN_MATCHING_FALLBACK[level].map((pair, index) => ({ id: index + 1, zh: pair.zh, vi: pair.vi }));
     return jsonResponse({ pairs: fallback, levelLabel: LEVEL_LABELS[level], source: "fallback" });
   }
   const rawData = await groqJson(
     "Bạn tạo bài ghép từ tiếng Trung - tiếng Việt. Chỉ trả JSON thuần.",
-    `Tạo bộ ghép từ tiếng Trung ở mức ${LEVEL_LABELS[level]}. Chỉ dùng từ hoặc cụm từ ngắn. Trả JSON: {"pairs":[{"en":"汉字","vi":"nghĩa tiếng Việt"}]}`,
+    `Tạo bộ ghép từ tiếng Trung ở mức ${LEVEL_LABELS[level]}. Chỉ dùng từ hoặc cụm từ ngắn. Trả JSON: {"pairs":[{"zh":"汉字","vi":"nghĩa tiếng Việt"}]}`,
     0.35,
   );
   return jsonResponse({
-    pairs: normalizePairs(rawData?.pairs, level),
+    pairs: normalizeCnPairs(rawData?.pairs, level),
     levelLabel: LEVEL_LABELS[level],
     source: "ai",
   });
