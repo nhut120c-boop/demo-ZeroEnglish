@@ -213,6 +213,20 @@
         });
     }
 
+    function buildChineseUtterance(transcript, level) {
+        if (!window.speechSynthesis) return null;
+        const utterance = new SpeechSynthesisUtterance(transcript);
+        utterance.lang = "zh-CN";
+        utterance.rate = level === "easy" ? 0.75 : 0.9;
+        // Tường minh chọn giọng zh-CN
+        const voices = window.speechSynthesis.getVoices();
+        const zhVoice = voices.find(v => v.lang === "zh-CN")
+            || voices.find(v => v.lang === "zh-TW")
+            || voices.find(v => v.lang.startsWith("zh"));
+        if (zhVoice) utterance.voice = zhVoice;
+        return utterance;
+    }
+
     async function handleChineseListeningGeneration() {
         setBusy(refs.cnGenerateListenBtn, true, "Đang tạo...");
         show(refs.cnListenLoadingMsg);
@@ -229,12 +243,9 @@
             const data = await api.generateChineseListening(level);
             state.cnCurrentListening.transcript = data.transcript;
             state.cnCurrentListening.questions = data.questions;
+            state.cnCurrentListening.level = level;
 
-            const utterance = new SpeechSynthesisUtterance(data.transcript);
-            utterance.lang = "zh-CN";
-            utterance.rate = level === "easy" ? 0.75 : 0.9;
-            state.cnCurrentListening.utterance = utterance;
-
+            // Lưu level để rebuild utterance mỗi lần play
             refs.cnTranscriptBox.textContent = data.transcript;
             renderChineseListeningQuestions();
             show(refs.cnListeningBox);
@@ -275,12 +286,15 @@
         refs.cnGenerateListenBtn.addEventListener("click", handleChineseListeningGeneration);
         refs.cnSubmitQuizBtn.addEventListener("click", handleChineseSubmitQuiz);
         refs.cnPlayAudioBtn.addEventListener("click", () => {
-            if (!state.cnCurrentListening.utterance || !window.speechSynthesis) {
+            if (!state.cnCurrentListening.transcript || !window.speechSynthesis) {
                 showError("Chưa có đoạn nghe để phát."); return;
             }
             if (window.speechSynthesis.paused) { window.speechSynthesis.resume(); return; }
+            // Luôn rebuild utterance mới với giọng zh-CN được chọn tường minh
             window.speechSynthesis.cancel();
-            window.speechSynthesis.speak(state.cnCurrentListening.utterance);
+            const level = state.cnCurrentListening.level || "medium";
+            const freshUtterance = buildChineseUtterance(state.cnCurrentListening.transcript, level);
+            if (freshUtterance) window.speechSynthesis.speak(freshUtterance);
         });
         refs.cnStopAudioBtn.addEventListener("click", () => {
             if (window.speechSynthesis) window.speechSynthesis.cancel();

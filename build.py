@@ -18,6 +18,7 @@ SOURCES = [
     "src/90-chat.js",
     "src/100-listening.js",
     "src/110-matching.js",
+    "src/cn-modules.js",
     "src/120-bootstrap.js",
     "src/999-end.js",
 ]

@@ -22,6 +22,10 @@
         const utterance = new SpeechSynthesisUtterance(transcript);
         utterance.lang = "en-US";
         utterance.rate = level === "easy" ? 0.82 : level === "medium" ? 0.95 : 1.04;
+        // Tường minh chọn giọng en-US để tránh bị giữ giọng zh-CN từ session trước
+        const voices = window.speechSynthesis.getVoices();
+        const enVoice = voices.find(v => v.lang === "en-US") || voices.find(v => v.lang.startsWith("en"));
+        if (enVoice) utterance.voice = enVoice;
         return utterance;
     }
 
@@ -87,13 +91,16 @@
     }
 
     function handlePlayAudio() {
-        if (!state.currentListening.utterance || !window.speechSynthesis) {
+        if (!state.currentListening.transcript || !window.speechSynthesis) {
             showError("Chưa có đoạn nghe. Vui lòng tạo bài trước.");
             return;
         }
         if (window.speechSynthesis.paused) { window.speechSynthesis.resume(); return; }
+        // Luôn cancel và rebuild utterance mới — không tái sử dụng object cũ đã bị "consumed"
         window.speechSynthesis.cancel();
-        window.speechSynthesis.speak(state.currentListening.utterance);
+        const level = refs.listenLevelSelect ? refs.listenLevelSelect.value : "medium";
+        const freshUtterance = buildUtterance(state.currentListening.transcript, level);
+        if (freshUtterance) window.speechSynthesis.speak(freshUtterance);
     }
 
     function initListening() {
